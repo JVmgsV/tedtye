@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Beta de Cartas</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <h1>Beta de Cartas</h1>
+      <p>Protótipo local para testar login, packs e abertura de cartas.</p>
+    </header>
+
+    <main class="container">
+      <section class="card" id="login-card">
+        <h2>Login rápido</h2>
+        <p>Entre com um nome de usuário simples. Use <strong>admin</strong> para acessar o painel.</p>
+        <div class="form-row">
+          <input type="text" id="username-input" placeholder="Digite seu usuário" />
+          <button id="login-button">Entrar</button>
+          <button id="logout-button" class="secondary hidden">Sair</button>
+        </div>
+        <p class="status" id="login-status">Nenhum usuário autenticado.</p>
+      </section>
+
+      <section class="card" id="wallet-card">
+        <h2>Carteira</h2>
+        <p>Saldo fictício usado para comprar packs.</p>
+        <div class="wallet-row">
+          <span id="wallet-balance">Saldo: 0</span>
+          <button id="add-funds">Adicionar 100 moedas</button>
+        </div>
+      </section>
+
+      <section class="card" id="packs-card">
+        <h2>Packs disponíveis</h2>
+        <div id="packs-list" class="grid"></div>
+      </section>
+
+      <section class="card" id="inventory-card">
+        <h2>Inventário</h2>
+        <div id="inventory-list" class="grid"></div>
+      </section>
+
+      <section class="card hidden" id="admin-card">
+        <h2>Painel admin</h2>
+        <div class="admin-grid">
+          <div>
+            <h3>Nova carta</h3>
+            <div class="form-column">
+              <input type="text" id="card-name" placeholder="Nome" />
+              <input type="text" id="card-type" placeholder="Tipo (Token, etc.)" />
+              <input type="number" id="card-move" placeholder="MOV" min="0" />
+              <input type="number" id="card-mana" placeholder="Mana" min="0" />
+              <input type="text" id="card-class" placeholder="Classe" />
+              <select id="card-rarity">
+                <option value="Common">Common</option>
+                <option value="Uncommon">Uncommon</option>
+                <option value="Rare">Rare</option>
+                <option value="Epic">Epic</option>
+              </select>
+              <textarea id="card-description" placeholder="Descrição"></textarea>
+              <button id="add-card">Salvar carta</button>
+            </div>
+          </div>
+
+          <div>
+            <h3>Novo pack</h3>
+            <div class="form-column">
+              <input type="text" id="pack-name" placeholder="Nome do pack" />
+              <input type="number" id="pack-price" placeholder="Preço" min="0" />
+              <input type="number" id="pack-slots" placeholder="Cartas por pack" min="1" value="3" />
+              <label class="tiny">Probabilidades (%)</label>
+              <div class="form-row">
+                <input type="number" id="chance-common" placeholder="Common" value="70" min="0" />
+                <input type="number" id="chance-uncommon" placeholder="Uncommon" value="25" min="0" />
+              </div>
+              <div class="form-row">
+                <input type="number" id="chance-rare" placeholder="Rare" value="5" min="0" />
+                <input type="number" id="chance-epic" placeholder="Epic" value="0" min="0" />
+              </div>
+              <button id="add-pack">Salvar pack</button>
+            </div>
+          </div>
+        </div>
+        <p class="status" id="admin-status"></p>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>Dados são salvos apenas no navegador (localStorage).</p>
+    </footer>
+
+    <script src="app.js"></script>
+  </body>
+</html>
