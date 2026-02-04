@@ -1,13 +1,13 @@
 {
   "name": "beta-cartas",
   "version": "1.0.0",
-  "description": "Protótipo de cartas com persistência em arquivo JSON.",
-  "main": "server.js",
+  "description": "Protótipo de cartas com persistência via Vercel KV ou arquivo JSON local.",
+  "main": "api/state.js",
   "type": "commonjs",
   "scripts": {
-    "start": "node server.js"
+    "dev": "vercel dev"
   },
   "dependencies": {
-    "express": "^4.19.2"
+    "@vercel/kv": "^1.0.1"
   }
 }

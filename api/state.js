@@ -1,11 +1,10 @@
-const express = require("express");
 const fs = require("fs");
 const path = require("path");
+const { kv } = require("@vercel/kv");
 
-const app = express();
-const port = process.env.PORT || 8000;
-const dataDir = path.join(__dirname, "data");
+const dataDir = path.join(process.cwd(), "data");
 const dataFile = path.join(dataDir, "db.json");
+const kvKey = "beta_cartas_state";
 
 const defaultState = {
   users: [],
@@ -66,6 +65,11 @@ const defaultState = {
   adminPassword: "1234",
 };
 
+const hasKV =
+  process.env.KV_REST_API_URL &&
+  process.env.KV_REST_API_TOKEN &&
+  process.env.KV_REST_API_READ_ONLY_TOKEN;
+
 const ensureDataFile = () => {
   if (!fs.existsSync(dataDir)) {
     fs.mkdirSync(dataDir, { recursive: true });
@@ -75,35 +79,50 @@ const ensureDataFile = () => {
   }
 };
 
-const readState = () => {
+const readStateFromFile = () => {
   ensureDataFile();
   const raw = fs.readFileSync(dataFile, "utf-8");
   return JSON.parse(raw);
 };
 
-const writeState = (payload) => {
+const writeStateToFile = (payload) => {
   ensureDataFile();
   fs.writeFileSync(dataFile, JSON.stringify(payload, null, 2));
 };
 
-app.use(express.json({ limit: "2mb" }));
-app.use(express.static(__dirname));
+const readState = async () => {
+  if (hasKV) {
+    const stored = await kv.get(kvKey);
+    return stored || defaultState;
+  }
+  return readStateFromFile();
+};
 
-app.get("/api/state", (req, res) => {
-  const state = readState();
-  res.json(state);
-});
-
-app.post("/api/state", (req, res) => {
-  const payload = req.body;
-  if (!payload || typeof payload !== "object") {
-    res.status(400).json({ error: "Payload inválido" });
+const writeState = async (payload) => {
+  if (hasKV) {
+    await kv.set(kvKey, payload);
     return;
   }
-  writeState(payload);
-  res.json({ ok: true });
-});
+  writeStateToFile(payload);
+};
 
-app.listen(port, () => {
-  console.log(`Servidor iniciado em http://localhost:${port}`);
-});
+module.exports = async (req, res) => {
+  if (req.method === "GET") {
+    const state = await readState();
+    res.status(200).json(state);
+    return;
+  }
+
+  if (req.method === "POST") {
+    const payload = req.body;
+    if (!payload || typeof payload !== "object") {
+      res.status(400).json({ error: "Payload inválido" });
+      return;
+    }
+    await writeState(payload);
+    res.status(200).json({ ok: true });
+    return;
+  }
+
+  res.status(405).json({ error: "Método não permitido" });
+};
