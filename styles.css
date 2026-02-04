@@ -283,8 +283,16 @@ button.secondary {
   --rarity-color: #89077a;
 }
 
+.rarity-super-rare {
+  --rarity-color: #ff6ad5;
+}
+
 .rarity-legendary {
   --rarity-color: #b2813e;
+}
+
+.rarity-secret-rare {
+  --rarity-color: #b3001b;
 }
 
 .inventory-card:hover,
@@ -355,6 +363,38 @@ button.secondary {
   background: rgba(255, 255, 255, 0.15);
   color: #fff;
   border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.foil {
+  position: relative;
+}
+
+.foil::after {
+  content: "";
+  position: absolute;
+  inset: -40% -40%;
+  background: linear-gradient(
+    120deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.18) 20%,
+    rgba(255, 0, 180, 0.25) 40%,
+    rgba(0, 200, 255, 0.25) 60%,
+    rgba(255, 255, 255, 0.18) 80%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  mix-blend-mode: screen;
+  opacity: 0.85;
+  animation: foilShimmer 4s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes foilShimmer {
+  0% {
+    transform: translateX(-30%) rotate(8deg);
+  }
+  100% {
+    transform: translateX(30%) rotate(8deg);
+  }
 }
 
 .card-modal {

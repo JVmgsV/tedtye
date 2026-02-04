@@ -62,6 +62,8 @@ const ui = {
   chanceRare: document.getElementById("chance-rare"),
   chanceEpic: document.getElementById("chance-epic"),
   chanceLegendary: document.getElementById("chance-legendary"),
+  chanceSuperRare: document.getElementById("chance-super-rare"),
+  chanceSecretRare: document.getElementById("chance-secret-rare"),
   addPack: document.getElementById("add-pack"),
   adminStatus: document.getElementById("admin-status"),
   cardModal: document.getElementById("card-modal"),
@@ -101,6 +103,478 @@ const defaultCards = [
     class: "Espadachim",
     description: "Ataque rápido que causa dano extra se o alvo estiver marcado.",
   },
+  {
+    id: 4,
+    name: "Pointy Kunai",
+    type: "Arma",
+    move: 0,
+    mana: 0,
+    rarity: "Uncommon",
+    class: "Ninja",
+    description: "Sua ponta afiada fere inimigos em curta distância. +3 aFor.",
+  },
+  {
+    id: 5,
+    name: "Ninja Tabis",
+    type: "Passiva",
+    move: 0,
+    mana: 0,
+    rarity: "Uncommon",
+    class: "Acessorio",
+    description:
+      "Botas clássicas que trocam o visual de seus sapatos. Enquanto estiver se movimentando, se for atacado ganha +5 de Arm e Def.",
+  },
+  {
+    id: 6,
+    name: "3 Count Bout",
+    type: "Ninjutsu",
+    move: 0,
+    mana: 0,
+    rarity: "Ultra Rare",
+    class: "Pon",
+    description:
+      "Se o inimigo usar uma skill que gasta 3 ações você pode ganhar 1 das ações dele.",
+  },
+  {
+    id: 7,
+    name: "Light Tracker",
+    type: "Skill",
+    move: 0,
+    mana: 1,
+    rarity: "Common",
+    class: "Ninja",
+    description: "Marca pegadas com uma luz brilhante.",
+  },
+  {
+    id: 8,
+    name: "Eye of Karado",
+    type: "Skill",
+    move: 0,
+    mana: 1,
+    rarity: "Common",
+    class: "Ninja",
+    description:
+      "Você pode ver o Archelus do inimigo. Gaste 10 de Mp para tornar público para todos em sua party.",
+  },
+  {
+    id: 9,
+    name: "Sharp and Swift Combo",
+    type: "Skill",
+    move: 1,
+    mana: 5,
+    rarity: "Common",
+    class: "Ninja",
+    description:
+      "Você ataca o inimigo com um combo de 3 ataques bem rápidos. Vel + 1D4, Vel + 1D8, Força + 1D12.",
+  },
+  {
+    id: 10,
+    name: "Sounds of the Rain",
+    type: "Passiva",
+    move: 0,
+    mana: 0,
+    rarity: "Common",
+    class: "Ninja",
+    description:
+      "Se chover no campo você ganha um aumento de velocidade de +1 para cada nível.",
+  },
+  {
+    id: 11,
+    name: "We do the Trade then",
+    type: "Skill Defesa",
+    move: 2,
+    mana: 5,
+    rarity: "Uncommon",
+    class: "Ninja",
+    description:
+      "Troca a sua arma com a do inimigo por 1 turno quando você for atacado.",
+  },
+  {
+    id: 12,
+    name: "Transversal Slash",
+    type: "Skill",
+    move: 0,
+    mana: 8,
+    rarity: "Rare",
+    class: "Ninja",
+    description:
+      "Se você estiver no ar você dá um giro de 360 graus com o seu corpo virando para a terra e dando um corte no inimigo almejado. Use 1 contador para o segundo corte.",
+  },
+  {
+    id: 13,
+    name: "Ninja Essentials",
+    type: "Acessorio",
+    move: 1,
+    mana: 0,
+    rarity: "Rare",
+    class: "Ninja",
+    description:
+      "Você ganha os essenciais de um ninja. Inclui Smoke Bomb, Throwing Kunai e Iron Dagger.",
+  },
+  {
+    id: 14,
+    name: "Smoke Bomb",
+    type: "Skill",
+    move: 0,
+    mana: 0,
+    rarity: "Common",
+    class: "Ninja",
+    description: "Cria uma fumaça que faz um turno passar mais rápido.",
+  },
+  {
+    id: 15,
+    name: "Throwing Kunai",
+    type: "Skill",
+    move: 1,
+    mana: 0,
+    rarity: "Common",
+    class: "Ninja",
+    description:
+      "Joga uma Kunai básica. Teste de Percepção entre 4 e 13. Dano PDF + Des + 1D10.",
+  },
+  {
+    id: 16,
+    name: "Ninja Robe",
+    type: "Ninjutsu",
+    move: 0,
+    mana: 0,
+    rarity: "Rare",
+    class: "Richi",
+    description:
+      "Se o inimigo chamar uma arma ou equipamento do deck você pode chamar esta Ninja Robe por 3 Ninjutsu. Permanente enquanto Richi.",
+  },
+  {
+    id: 17,
+    name: "Ninja Robe (Armor)",
+    type: "Armor",
+    move: 0,
+    mana: 0,
+    rarity: "Rare",
+    class: "Ninja",
+    description:
+      "Toma os atributos da armadura ou da arma como resistência ou armadura. +5 Velocidade e +3 Armadura.",
+  },
+  {
+    id: 18,
+    name: "Ninjerf +3",
+    type: "Arma",
+    move: 0,
+    mana: 0,
+    rarity: "Common",
+    class: "Ninja",
+    description:
+      "Cuidados devem ser tomados antes de usar o produto. Contém partes pequenas que podem ser ingeridas. +1 aFor e +1 aVel.",
+  },
+  {
+    id: 19,
+    name: "Caffeine Pills",
+    type: "Item",
+    move: 0,
+    mana: 0,
+    rarity: "Common",
+    class: "Uso 1",
+    description:
+      "Você não precisa dormir por 14 horas e fica com o dobro da velocidade.",
+  },
+  {
+    id: 20,
+    name: "Illusionist Cape",
+    type: "Armor",
+    move: 0,
+    mana: 0,
+    rarity: "Uncommon",
+    class: "Ninja",
+    description:
+      "Cria uma ilusão que fica parada no seu lugar caso você fique invisível com um ninjutsu. +2 Armadura e +2 Resistência.",
+  },
+  {
+    id: 21,
+    name: "Star Kick",
+    type: "Ron",
+    move: 0,
+    mana: 0,
+    rarity: "Rare",
+    class: "Ext",
+    description:
+      "Quando um aliado der um golpe com as mãos você pode dar um chute que estende o combo. Vel + Des + 2D10.",
+  },
+  {
+    id: 22,
+    name: "Red Tattoo Pack",
+    type: "Passiva",
+    move: 0,
+    mana: 0,
+    rarity: "Rare",
+    class: "Ninja",
+    description:
+      "Você marca outros ninjas com uma tatuagem vermelha e para cada ninja com tatuagem vermelha você ganha +2 de Velocidade.",
+  },
+  {
+    id: 23,
+    name: "Confirmation Slash",
+    type: "Ron",
+    move: 0,
+    mana: 0,
+    rarity: "Common",
+    class: "Ninjutsu",
+    description:
+      "Se o inimigo estiver marcado de algum jeito por você, corre e passa como um raio de luz pelo inimigo cortando ele e removendo o rastreamento colocado.",
+  },
+  {
+    id: 24,
+    name: "Astec Day Trap",
+    type: "Ninjutsu",
+    move: 0,
+    mana: 0,
+    rarity: "Common",
+    class: "Richi",
+    description:
+      "Por 1 contador, se o inimigo alvo ficar sem ações você acerta um dardo de veneno na perna dele causando dano médio.",
+  },
+  {
+    id: 25,
+    name: "Death Bed Grip",
+    type: "Skill Defesa",
+    move: 1,
+    mana: 12,
+    rarity: "Rare",
+    class: "Ninja",
+    description:
+      "Se o inimigo te atacar corpo a corpo faça um teste de Velocidade contra o teste de ataque dele. Se ele perder você quebra o ataque dele com um mata leão.",
+  },
+  {
+    id: 26,
+    name: "Intruder Trap",
+    type: "Richi",
+    move: 0,
+    mana: 0,
+    rarity: "Uncommon",
+    class: "Ninja",
+    description:
+      "Marque um aliado e na frente dele será criada uma armadilha mágica de corda invisível que qualquer pessoa que não seja você ou ele que pisar será levada para cima.",
+  },
+  {
+    id: 27,
+    name: "Rope-ken",
+    type: "Skill",
+    move: 2,
+    mana: 8,
+    rarity: "Common",
+    class: "Ron",
+    description:
+      "Uma shuriken com um fio de nylon quase invisível que você pode puxar de volta.",
+  },
+  {
+    id: 28,
+    name: "Chinese Gun Trap",
+    type: "Ninjutsu",
+    move: 2,
+    mana: 0,
+    rarity: "Common",
+    class: "Pon",
+    description:
+      "Por 1 contador quando o inimigo for atacar um aliado corpo a corpo você pode atirar com esta arma de dedo chinesa que atira feijões.",
+  },
+  {
+    id: 29,
+    name: "Repetition Key",
+    type: "Skill",
+    move: 0,
+    mana: 8,
+    rarity: "Rare",
+    class: "Ninja",
+    description:
+      "Você dá um chute lua cheia no inimigo. Se ainda tiver ação você ganha esta carta de volta em sua mão com menos 1 de mana.",
+  },
+  {
+    id: 30,
+    name: "Needle-bouquet",
+    type: "Skill",
+    move: 0,
+    mana: 0,
+    rarity: "Uncommon",
+    class: "Ron",
+    description:
+      "Joga um buquê de alfinetes para o céu e acerta uma pessoa no campo.",
+  },
+  {
+    id: 31,
+    name: "Nilon-Filled",
+    type: "Passiva",
+    move: 0,
+    mana: 0,
+    rarity: "Secret Rare",
+    class: "Ninja",
+    description:
+      "Toda vez que jogar uma kunai ou shuriken jogue 1D6 escolhendo par ou ímpar.",
+  },
+  {
+    id: 32,
+    name: "Zipper Nilon",
+    type: "Skill",
+    move: 0,
+    mana: 10,
+    rarity: "Uncommon",
+    class: "Ron",
+    description:
+      "Traz de volta a adaga ligada a este zipper de nylon cortando o inimigo novamente caso tenha acertado antes.",
+  },
+  {
+    id: 33,
+    name: "Punch Line",
+    type: "Richi",
+    move: 0,
+    mana: 35,
+    rarity: "Super Rare",
+    class: "Ninja",
+    description:
+      "Este Richi dura 3 turnos. Toda vez que alguém passar pela armadilha você faz um teste de Percepção.",
+  },
+  {
+    id: 34,
+    name: "Maian Night Trap",
+    type: "Ninjutsu",
+    move: 0,
+    mana: 0,
+    rarity: "Common",
+    class: "Richi",
+    description:
+      "Por 1 contador, se o inimigo alvo ficar parado você acerta a perna dele com um dardo de veneno.",
+  },
+  {
+    id: 35,
+    name: "Frappatino Pills",
+    type: "Item",
+    move: 0,
+    mana: 0,
+    rarity: "Uncommon",
+    class: "Uso 1",
+    description:
+      "Pode parar sangramentos. Role 1D6 escolhendo par ou ímpar. Aumenta o tempo de reação do consumidor.",
+  },
+  {
+    id: 36,
+    name: "How About a Trick",
+    type: "Richi",
+    move: 0,
+    mana: 0,
+    rarity: "Rare",
+    class: "Ninjutsu",
+    description:
+      "Este é um Richi infinito. Jogue 1D X sendo X o tamanho do deck do inimigo.",
+  },
+  {
+    id: 37,
+    name: "Blue Cyclops Dagger",
+    type: "Arma",
+    move: 0,
+    mana: 0,
+    rarity: "Uncommon",
+    class: "Ron",
+    description:
+      "Pode usar durabilidade para quebrar uma passiva do inimigo. Quando equipada você vê os Archelus de um inimigo aleatório.",
+  },
+  {
+    id: 38,
+    name: "Iron Dagger",
+    type: "Arma",
+    move: 1,
+    mana: 0,
+    rarity: "Common",
+    class: "Ninja",
+    description: "Isso dói com certeza. +2 aFor.",
+  },
+  {
+    id: 39,
+    name: "Fuma Giant Star",
+    type: "Arma",
+    move: 0,
+    mana: 0,
+    rarity: "Legendary",
+    class: "Ninja",
+    description:
+      "Se você marcou o inimigo de alguma forma o ataque desta shuriken dará um crítico em forma de explosão após o golpe.",
+  },
+  {
+    id: 40,
+    name: "Ninkro",
+    type: "Acessorio",
+    move: 0,
+    mana: 0,
+    rarity: "Legendary",
+    class: "Ninja",
+    description:
+      "Você pode gastar 3 Ninjutsus e ficar invisível. Toda vez que se mover o nível de invisibilidade cai.",
+  },
+  {
+    id: 41,
+    name: "Mornin Rice Season",
+    type: "Skill",
+    move: 0,
+    mana: 10,
+    rarity: "Ultra Rare",
+    class: "Ninja",
+    description:
+      "Teste de Des maior que 10. Você joga sua arma para suas costas, segura no fio e desce a Kisarigama na cabeça do inimigo.",
+  },
+];
+
+const ninjaRollTable = [
+  { rarities: ["Common", "Common", "Uncommon", "Rare", "Rare", "Super Rare"] },
+  { rarities: ["Ultra Rare", "Common", "Common", "Rare", "Uncommon", "Common"] },
+  { rarities: ["Uncommon", "Common", "Common", "Rare", "Uncommon"] },
+  { rarities: ["Ultra Rare", "Common", "Common", "Rare", "Rare", "Uncommon"], foil: true },
+  { rarities: ["Uncommon", "Uncommon", "Common", "Uncommon", "Super Rare"] },
+  { rarities: ["Common", "Common", "Super Rare", "Uncommon", "Rare"] },
+  { rarities: ["Legendary", "Common", "Common", "Rare", "Common", "Uncommon"], foil: true },
+  { rarities: ["Uncommon", "Common", "Common", "Rare", "Uncommon"] },
+  { rarities: ["Uncommon", "Common", "Common", "Rare", "Uncommon", "Common"] },
+  { rarities: ["Rare", "Rare", "Rare", "Common", "Common", "Uncommon"] },
+  { rarities: ["Common", "Uncommon", "Common", "Rare", "Rare", "Uncommon"] },
+  { rarities: ["Uncommon", "Common", "Common", "Rare", "Uncommon", "Common", "Common"] },
+  { rarities: ["Common", "Common", "Common", "Common", "Common"] },
+  { rarities: ["Common", "Uncommon", "Common", "Rare", "Rare"] },
+  { rarities: ["Common", "Uncommon", "Common", "Rare", "Uncommon"] },
+  { rarities: ["Super Rare", "Common", "Common", "Rare", "Uncommon"] },
+  { rarities: ["Common", "Common", "Uncommon", "Rare", "Rare"] },
+  { rarities: ["Uncommon", "Super Rare", "Common", "Rare", "Uncommon", "Common"] },
+  { rarities: ["Ultra Rare", "Uncommon", "Common", "Rare", "Rare", "Common"] },
+  { rarities: ["Super Rare", "Common", "Common", "Rare", "Rare"] },
+  { rarities: ["Common", "Common", "Rare", "Rare", "Uncommon", "Ultra Rare"] },
+  { rarities: ["Common", "Common", "Common", "Common", "Common"] },
+  { rarities: ["Secret Rare", "Super Rare", "Common", "Uncommon", "Uncommon", "Common"] },
+  { rarities: ["Common", "Common", "Common", "Common", "Common"] },
+  { rarities: ["Uncommon", "Common", "Common", "Rare", "Uncommon"] },
+  { rarities: ["Common", "Common", "Uncommon", "Rare", "Rare", "Uncommon"] },
+  { rarities: ["Super Rare", "Common", "Common", "Rare", "Uncommon"] },
+  { rarities: ["Super Rare", "Super Rare", "Common", "Common", "Common"], foil: true },
+  { rarities: ["Common", "Common", "Ultra Rare", "Rare", "Rare"] },
+  { rarities: ["Common", "Common", "Uncommon", "Rare", "Rare", "Super Rare"] },
+  { rarities: ["Common", "Uncommon", "Rare", "Uncommon", "Common"] },
+  { rarities: ["Ultra Rare", "Common", "Common", "Common", "Common"], foil: true },
+  { rarities: ["Common", "Common", "Rare", "Uncommon", "Super Rare"] },
+  { rarities: ["Uncommon", "Uncommon", "Uncommon", "Rare", "Rare"] },
+  { rarities: ["Uncommon", "Common", "Common", "Rare", "Uncommon"] },
+  { rarities: ["Super Rare", "Common", "Common", "Rare", "Uncommon"] },
+  { rarities: ["Common", "Super Rare", "Uncommon", "Rare", "Rare", "Common"] },
+  { rarities: ["Legendary", "Common", "Uncommon", "Common", "Rare"] },
+  { rarities: ["Common", "Common", "Common", "Common", "Common"] },
+  { rarities: ["Common", "Common", "Common", "Uncommon", "Rare", "Common"] },
+  { rarities: ["Uncommon", "Common", "Uncommon", "Common", "Super Rare"] },
+  { rarities: ["Uncommon", "Uncommon", "Uncommon", "Common", "Rare", "Rare"] },
+  { rarities: ["Common", "Uncommon", "Common", "Common", "Uncommon", "Common"] },
+  { rarities: ["Common", "Super Rare", "Common", "Rare", "Uncommon"] },
+  { rarities: ["Common", "Common", "Rare", "Uncommon", "Super Rare", "Uncommon"] },
+  { rarities: ["Super Rare", "Common", "Rare", "Uncommon", "Uncommon"] },
+  { rarities: ["Common", "Ultra Rare", "Common", "Rare", "Uncommon", "Common"] },
+  { rarities: ["Common", "Common", "Rare", "Uncommon", "Uncommon", "Common"] },
+  { rarities: ["Common", "Common", "Ultra Rare", "Uncommon", "Common", "Uncommon"] },
+  { rarities: ["Legendary", "Rare", "Uncommon", "Uncommon", "Common"] },
+  { rarities: ["Secret Rare", "Super Rare", "Ultra Rare", "Uncommon", "Rare"], foil: true },
+  { rarities: ["Super Rare", "Common", "Super Rare", "Rare", "Uncommon", "Uncommon"] },
+  { rarities: ["Uncommon", "Common", "Common", "Rare", "Ultra Rare", "Uncommon"] },
+  { rarities: ["Uncommon", "Ultra Rare", "Common", "Rare", "Super Rare", "Uncommon"] },
+  { rarities: ["Common", "Common", "Rare", "Ultra Rare", "Legendary", "Rare"] },
 ];
 
 const defaultPacks = [
@@ -115,7 +589,16 @@ const defaultPacks = [
       Rare: 5,
       "Ultra Rare": 0,
       Legendary: 0,
+      "Super Rare": 0,
+      "Secret Rare": 0,
     },
+  },
+  {
+    id: 2,
+    name: "Pack de Ninja",
+    price: 90,
+    slots: 6,
+    rollTable: ninjaRollTable,
   },
 ];
 
@@ -181,6 +664,12 @@ const formatCardTitle = (card) => `${card.name} • ${card.rarity}`;
 
 const getRarityClass = (rarity) => {
   const value = String(rarity || "").toLowerCase();
+  if (value.includes("secret")) {
+    return "rarity-secret-rare";
+  }
+  if (value.includes("super")) {
+    return "rarity-super-rare";
+  }
   if (value.includes("legend")) {
     return "rarity-legendary";
   }
@@ -202,6 +691,7 @@ const normalizeInventory = () => {
       id: item.id || crypto.randomUUID(),
       cardId: item.cardId,
       acquiredAt: item.acquiredAt || new Date().toISOString(),
+      foil: item.foil || false,
     }));
   });
 };
@@ -410,10 +900,14 @@ const renderPacks = () => {
     slots.textContent = `Cartas por pack: ${pack.slots}`;
     const badge = document.createElement("span");
     badge.className = "badge";
-    const chanceLabels = Object.entries(pack.chances || {})
-      .filter(([, value]) => Number(value || 0) > 0)
-      .map(([rarity, value]) => `${rarity} ${value}%`);
-    badge.textContent = chanceLabels.length ? chanceLabels.join(" • ") : "Sem chances configuradas";
+    if (pack.rollTable) {
+      badge.textContent = `Tabela especial: 1d${pack.rollTable.length}`;
+    } else {
+      const chanceLabels = Object.entries(pack.chances || {})
+        .filter(([, value]) => Number(value || 0) > 0)
+        .map(([rarity, value]) => `${rarity} ${value}%`);
+      badge.textContent = chanceLabels.length ? chanceLabels.join(" • ") : "Sem chances configuradas";
+    }
     const openButton = document.createElement("button");
     openButton.textContent = "Comprar e abrir";
     openButton.addEventListener("click", () => openPack(pack.id));
@@ -426,6 +920,9 @@ const renderPacks = () => {
 const buildCardElement = (card, options = {}) => {
   const container = document.createElement("div");
   container.className = `${options.className || "inventory-card"} ${getRarityClass(card.rarity)}`;
+  if (options.foil) {
+    container.classList.add("foil");
+  }
   const title = document.createElement("h4");
   title.textContent = formatCardTitle(card);
   const meta = document.createElement("p");
@@ -441,6 +938,12 @@ const buildCardElement = (card, options = {}) => {
     chip.textContent = label;
     chips.appendChild(chip);
   });
+  if (options.foil) {
+    const foilChip = document.createElement("span");
+    foilChip.className = "chip";
+    foilChip.textContent = "Foil";
+    chips.appendChild(foilChip);
+  }
 
   container.append(title, meta, desc, chips);
   if (options.actions) {
@@ -457,7 +960,7 @@ const buildCardElement = (card, options = {}) => {
   return container;
 };
 
-const createInventoryCard = (card, inventoryId) => {
+const createInventoryCard = (card, inventoryId, options = {}) => {
   const actions = document.createElement("div");
   actions.className = "inventory-actions";
   const decks = getDecksForCharacter();
@@ -478,7 +981,8 @@ const createInventoryCard = (card, inventoryId) => {
   return buildCardElement(card, {
     className: "inventory-card",
     actions,
-    onClick: () => openCardModal(card),
+    foil: options.foil,
+    onClick: () => openCardModal(card, { foil: options.foil }),
   });
 };
 
@@ -509,7 +1013,7 @@ const renderInventory = () => {
     if (!card) {
       return;
     }
-    ui.inventoryList.appendChild(createInventoryCard(card, item.id));
+    ui.inventoryList.appendChild(createInventoryCard(card, item.id, { foil: item.foil }));
   });
 };
 
@@ -585,7 +1089,41 @@ const updateBalance = () => {
   updateWallet();
 };
 
-const openPack = (packId) => {
+const rollDice = (sides) => Math.floor(Math.random() * sides) + 1;
+
+const animateRoll = (sides, duration = 900) =>
+  new Promise((resolve) => {
+    let elapsed = 0;
+    const interval = 90;
+    const ticker = setInterval(() => {
+      elapsed += interval;
+      const value = rollDice(sides);
+      setStatus(`Rolando 1d${sides}... ${value}`);
+      if (elapsed >= duration) {
+        clearInterval(ticker);
+        resolve();
+      }
+    }, interval);
+  });
+
+const rollPackWithTable = (pack) => {
+  const roll = rollDice(pack.rollTable.length);
+  const entry = pack.rollTable[roll - 1];
+  const foilRoll = entry.foil ? rollDice(100) : null;
+  return {
+    roll,
+    rarities: entry.rarities,
+    foil: entry.foil && foilRoll >= 66,
+  };
+};
+
+const pickCardByRarity = (rarity) => {
+  const candidates = state.cards.filter((card) => card.rarity === rarity);
+  const pool = candidates.length ? candidates : state.cards;
+  return pool[Math.floor(Math.random() * pool.length)];
+};
+
+const openPack = async (packId) => {
   const ownerKey = getOwnerKey();
   if (!ownerKey) {
     setStatus("Selecione um personagem para comprar packs.");
@@ -601,23 +1139,45 @@ const openPack = (packId) => {
   }
   state.balances[ownerKey] -= pack.price;
   const pulls = [];
-  for (let i = 0; i < pack.slots; i += 1) {
-    const rarity = rollRarity(pack.chances);
-    const candidates = state.cards.filter((card) => card.rarity === rarity);
-    const fallback = state.cards;
-    const pool = candidates.length ? candidates : fallback;
-    const card = pool[Math.floor(Math.random() * pool.length)];
-    pulls.push(card);
-    state.inventory[ownerKey].push({
-      id: crypto.randomUUID(),
-      cardId: card.id,
-      acquiredAt: new Date().toISOString(),
+  let resultInfo = "";
+  let foilApplied = false;
+  if (pack.rollTable) {
+    await animateRoll(pack.rollTable.length);
+    const rollResult = rollPackWithTable(pack);
+    resultInfo = ` (1d${pack.rollTable.length} = ${rollResult.roll})`;
+    foilApplied = rollResult.foil;
+    rollResult.rarities.forEach((rarity) => {
+      const card = pickCardByRarity(rarity);
+      pulls.push(card);
+      state.inventory[ownerKey].push({
+        id: crypto.randomUUID(),
+        cardId: card.id,
+        acquiredAt: new Date().toISOString(),
+        foil: rollResult.foil,
+      });
     });
+  } else {
+    for (let i = 0; i < pack.slots; i += 1) {
+      const rarity = rollRarity(pack.chances);
+      const card = pickCardByRarity(rarity);
+      pulls.push(card);
+      state.inventory[ownerKey].push({
+        id: crypto.randomUUID(),
+        cardId: card.id,
+        acquiredAt: new Date().toISOString(),
+        foil: false,
+      });
+    }
   }
   saveState();
   updateWallet();
   renderInventory();
-  setStatus(`Você abriu ${pack.name} e recebeu ${pulls.map(formatCardTitle).join(", ")}.`);
+  const foilNote = foilApplied ? " (Foil!)" : "";
+  setStatus(
+    `Você abriu ${pack.name}${resultInfo}${foilNote} e recebeu ${pulls
+      .map(formatCardTitle)
+      .join(", ")}.`,
+  );
 };
 
 const rollRarity = (chances) => {
@@ -680,6 +1240,8 @@ const addPack = () => {
     Rare: Number(ui.chanceRare.value || 0),
     "Ultra Rare": Number(ui.chanceEpic.value || 0),
     Legendary: Number(ui.chanceLegendary.value || 0),
+    "Super Rare": Number(ui.chanceSuperRare.value || 0),
+    "Secret Rare": Number(ui.chanceSecretRare.value || 0),
   };
 
   if (!name || price <= 0 || slots <= 0) {
@@ -776,7 +1338,8 @@ const renderDecks = () => {
       buildCardElement(card, {
         className: "deck-card",
         actions,
-        onClick: () => openCardModal(card),
+        foil: item.foil,
+        onClick: () => openCardModal(card, { foil: item.foil }),
       }),
     );
   });
@@ -866,11 +1429,12 @@ const closeOverlay = (overlay) => {
   overlay.hidden = true;
 };
 
-const openCardModal = (card) => {
+const openCardModal = (card, options = {}) => {
   ui.cardModalBody.innerHTML = "";
   ui.cardModalBody.appendChild(
     buildCardElement(card, {
       className: "inventory-card card-modal-card",
+      foil: options.foil,
     }),
   );
   openOverlay(ui.cardModal);
