@@ -412,8 +412,8 @@ button.secondary {
 }
 
 .card-modal-card {
-  width: min(440px, 90vw);
-  min-height: 320px;
+  width: min(520px, 92vw);
+  min-height: 380px;
 }
 
 .pack-modal-content {

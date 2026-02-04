@@ -65,6 +65,12 @@
             <select id="filter-class">
               <option value="">Classe (todas)</option>
             </select>
+            <select id="sort-inventory">
+              <option value="recent">Mais recente</option>
+              <option value="oldest">Mais antiga</option>
+              <option value="az">A → Z</option>
+              <option value="za">Z → A</option>
+            </select>
             <button id="clear-filters" class="secondary">Limpar</button>
           </div>
         </div>
@@ -82,21 +88,39 @@
             <button id="create-deck">Criar deck</button>
           </div>
         </div>
-        <div class="deck-layout">
-          <aside class="deck-list">
-            <h3>Meus decks</h3>
-            <ul id="deck-list"></ul>
-          </aside>
-          <div class="deck-workspace">
-            <div class="deck-header">
-              <h3 id="deck-title">Selecione um deck</h3>
-              <span id="deck-count" class="badge">0 cartas</span>
+          <div class="deck-layout">
+            <aside class="deck-list">
+              <h3>Meus decks</h3>
+              <ul id="deck-list"></ul>
+            </aside>
+            <div class="deck-workspace">
+              <div class="deck-header">
+                <h3 id="deck-title">Selecione um deck</h3>
+                <span id="deck-count" class="badge">0 cartas</span>
+              </div>
+              <div class="filters deck-filters">
+                <select id="deck-filter-type">
+                  <option value="">Tipo (todos)</option>
+                </select>
+                <select id="deck-filter-rarity">
+                  <option value="">Raridade (todas)</option>
+                </select>
+                <select id="deck-filter-class">
+                  <option value="">Classe (todas)</option>
+                </select>
+                <select id="deck-sort">
+                  <option value="recent">Mais recente</option>
+                  <option value="oldest">Mais antiga</option>
+                  <option value="az">A → Z</option>
+                  <option value="za">Z → A</option>
+                </select>
+                <button id="deck-clear-filters" class="secondary">Limpar</button>
+              </div>
+              <div id="deck-cards" class="grid"></div>
+              <p class="status" id="deck-status"></p>
             </div>
-            <div id="deck-cards" class="grid"></div>
-            <p class="status" id="deck-status"></p>
           </div>
-        </div>
-      </section>
+        </section>
     </main>
 
     <section class="overlay hidden" id="store-overlay" hidden>

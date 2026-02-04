@@ -35,7 +35,13 @@ const ui = {
   filterType: document.getElementById("filter-type"),
   filterRarity: document.getElementById("filter-rarity"),
   filterClass: document.getElementById("filter-class"),
+  sortInventory: document.getElementById("sort-inventory"),
   clearFilters: document.getElementById("clear-filters"),
+  deckFilterType: document.getElementById("deck-filter-type"),
+  deckFilterRarity: document.getElementById("deck-filter-rarity"),
+  deckFilterClass: document.getElementById("deck-filter-class"),
+  deckSort: document.getElementById("deck-sort"),
+  deckClearFilters: document.getElementById("deck-clear-filters"),
   characterName: document.getElementById("character-name"),
   createCharacter: document.getElementById("create-character"),
   characterList: document.getElementById("character-list"),
@@ -840,12 +846,15 @@ const buildFilterOptions = () => {
   updateSelect(ui.filterType, types, "Tipo (todos)");
   updateSelect(ui.filterRarity, rarities, "Raridade (todas)");
   updateSelect(ui.filterClass, classes, "Classe (todas)");
+  updateSelect(ui.deckFilterType, types, "Tipo (todos)");
+  updateSelect(ui.deckFilterRarity, rarities, "Raridade (todas)");
+  updateSelect(ui.deckFilterClass, classes, "Classe (todas)");
 };
 
-const passesFilters = (card) => {
-  const typeFilter = ui.filterType.value;
-  const rarityFilter = ui.filterRarity.value;
-  const classFilter = ui.filterClass.value;
+const passesFilters = (card, filters) => {
+  const typeFilter = filters.type;
+  const rarityFilter = filters.rarity;
+  const classFilter = filters.class;
   if (typeFilter && card.type !== typeFilter) {
     return false;
   }
@@ -856,6 +865,34 @@ const passesFilters = (card) => {
     return false;
   }
   return true;
+};
+
+const getInventoryFilters = () => ({
+  type: ui.filterType.value,
+  rarity: ui.filterRarity.value,
+  class: ui.filterClass.value,
+});
+
+const getDeckFilters = () => ({
+  type: ui.deckFilterType.value,
+  rarity: ui.deckFilterRarity.value,
+  class: ui.deckFilterClass.value,
+});
+
+const sortItems = (items, sortKey) => {
+  const sort = sortKey || "recent";
+  if (sort === "az" || sort === "za") {
+    return [...items].sort((a, b) => {
+      const nameA = a.card.name.toLowerCase();
+      const nameB = b.card.name.toLowerCase();
+      return sort === "az" ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
+    });
+  }
+  return [...items].sort((a, b) => {
+    const timeA = new Date(a.item.acquiredAt).getTime();
+    const timeB = new Date(b.item.acquiredAt).getTime();
+    return sort === "oldest" ? timeA - timeB : timeB - timeA;
+  });
 };
 
 const setStatus = (message) => {
@@ -1005,21 +1042,17 @@ const renderInventory = () => {
     ui.inventoryList.textContent = "Nenhuma carta ainda.";
     return;
   }
-  const visibleItems = items.filter((item) => {
-    const card = state.cards.find((entry) => entry.id === item.cardId);
-    return card && passesFilters(card);
-  });
+  const filters = getInventoryFilters();
+  const visibleItems = items
+    .map((item) => ({ item, card: state.cards.find((entry) => entry.id === item.cardId) }))
+    .filter((entry) => entry.card && passesFilters(entry.card, filters));
 
   if (!visibleItems.length) {
     ui.inventoryList.textContent = "Nenhuma carta corresponde ao filtro.";
     return;
   }
 
-  visibleItems.forEach((item) => {
-    const card = state.cards.find((entry) => entry.id === item.cardId);
-    if (!card) {
-      return;
-    }
+  sortItems(visibleItems, ui.sortInventory.value).forEach(({ item, card }) => {
     ui.inventoryList.appendChild(createInventoryCard(card, item.id, { foil: item.foil }));
   });
 };
@@ -1350,19 +1383,31 @@ const renderDecks = () => {
     ui.deckStatus.textContent = "Deck pronto para uso.";
   }
 
-  selectedDeck.cardIds.forEach((inventoryId) => {
-    const item = (state.inventory[ownerKey] || []).find((entry) => entry.id === inventoryId);
-    if (!item) {
-      return;
-    }
-    const card = state.cards.find((entry) => entry.id === item.cardId);
-    if (!card) {
-      return;
-    }
+  const deckItems = selectedDeck.cardIds
+    .map((inventoryId) => {
+      const item = (state.inventory[ownerKey] || []).find((entry) => entry.id === inventoryId);
+      if (!item) {
+        return null;
+      }
+      const card = state.cards.find((entry) => entry.id === item.cardId);
+      return card ? { item, card } : null;
+    })
+    .filter(Boolean);
+
+  const deckFilters = getDeckFilters();
+  const visibleDeckItems = deckItems.filter((entry) => passesFilters(entry.card, deckFilters));
+
+  if (!visibleDeckItems.length) {
+    ui.deckCards.innerHTML = "";
+    ui.deckCards.textContent = "Nenhuma carta corresponde ao filtro.";
+    return;
+  }
+
+  sortItems(visibleDeckItems, ui.deckSort.value).forEach(({ item, card }) => {
     const remove = document.createElement("button");
     remove.className = "secondary";
     remove.textContent = "Remover do deck";
-    remove.addEventListener("click", () => removeFromDeck(selectedDeck.id, inventoryId));
+    remove.addEventListener("click", () => removeFromDeck(selectedDeck.id, item.id));
     const actions = document.createElement("div");
     actions.className = "inventory-actions";
     actions.appendChild(remove);
@@ -1448,7 +1493,16 @@ const clearFilters = () => {
   ui.filterType.value = "";
   ui.filterRarity.value = "";
   ui.filterClass.value = "";
+  ui.sortInventory.value = "recent";
   renderInventory();
+};
+
+const clearDeckFilters = () => {
+  ui.deckFilterType.value = "";
+  ui.deckFilterRarity.value = "";
+  ui.deckFilterClass.value = "";
+  ui.deckSort.value = "recent";
+  renderDecks();
 };
 
 const openOverlay = (overlay) => {
@@ -1542,5 +1596,11 @@ ui.filterType.addEventListener("change", renderInventory);
 ui.filterRarity.addEventListener("change", renderInventory);
 ui.filterClass.addEventListener("change", renderInventory);
 ui.clearFilters.addEventListener("click", clearFilters);
+ui.sortInventory.addEventListener("change", renderInventory);
+ui.deckFilterType.addEventListener("change", renderDecks);
+ui.deckFilterRarity.addEventListener("change", renderDecks);
+ui.deckFilterClass.addEventListener("change", renderDecks);
+ui.deckSort.addEventListener("change", renderDecks);
+ui.deckClearFilters.addEventListener("click", clearDeckFilters);
 
 init();
