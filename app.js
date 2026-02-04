@@ -766,11 +766,9 @@ const handleAdminLogin = () => {
 
 const handlePlay = () => {
   const selectedDeck = getSelectedDeck();
-  if (!selectedDeck) {
-    ui.playStatus.textContent = "Selecione um deck antes de jogar.";
-  } else {
-    ui.playStatus.textContent = `Deck selecionado: ${selectedDeck.name}. Tela de jogo em construção.`;
-  }
+  ui.playStatus.textContent = selectedDeck
+    ? `Deck selecionado: ${selectedDeck.name}. Tela de jogo em construção.`
+    : "Tela de jogo em construção.";
   openOverlay(ui.playOverlay);
 };
 
