@@ -5,6 +5,7 @@ const storageKeys = {
   inventory: "beta_inventory",
   balances: "beta_balances",
   currentUser: "beta_current_user",
+  decks: "beta_decks",
 };
 
 const ui = {
@@ -34,6 +35,18 @@ const ui = {
   chanceRare: document.getElementById("chance-rare"),
   chanceEpic: document.getElementById("chance-epic"),
   addPack: document.getElementById("add-pack"),
+  filterType: document.getElementById("filter-type"),
+  filterRarity: document.getElementById("filter-rarity"),
+  filterClass: document.getElementById("filter-class"),
+  clearFilters: document.getElementById("clear-filters"),
+  deckName: document.getElementById("deck-name"),
+  createDeck: document.getElementById("create-deck"),
+  deckList: document.getElementById("deck-list"),
+  deckTitle: document.getElementById("deck-title"),
+  deckCount: document.getElementById("deck-count"),
+  deckDropzone: document.getElementById("deck-dropzone"),
+  deckCards: document.getElementById("deck-cards"),
+  deckStatus: document.getElementById("deck-status"),
 };
 
 const defaultCards = [
@@ -92,6 +105,8 @@ const state = {
   packs: [],
   inventory: {},
   balances: {},
+  decks: {},
+  selectedDeckId: null,
 };
 
 const storage = {
@@ -118,7 +133,15 @@ const loadState = () => {
   state.cards = storage.load(storageKeys.cards, defaultCards);
   state.packs = storage.load(storageKeys.packs, defaultPacks);
   state.inventory = storage.load(storageKeys.inventory, {});
+  Object.keys(state.inventory).forEach((username) => {
+    state.inventory[username] = state.inventory[username].map((item) => ({
+      id: item.id || crypto.randomUUID(),
+      cardId: item.cardId,
+      acquiredAt: item.acquiredAt || new Date().toISOString(),
+    }));
+  });
   state.balances = storage.load(storageKeys.balances, {});
+  state.decks = storage.load(storageKeys.decks, {});
   state.currentUser = localStorage.getItem(storageKeys.currentUser);
 };
 
@@ -128,6 +151,7 @@ const saveState = () => {
   storage.save(storageKeys.packs, state.packs);
   storage.save(storageKeys.inventory, state.inventory);
   storage.save(storageKeys.balances, state.balances);
+  storage.save(storageKeys.decks, state.decks);
   if (state.currentUser) {
     localStorage.setItem(storageKeys.currentUser, state.currentUser);
   } else {
@@ -145,6 +169,9 @@ const ensureUser = (username) => {
   if (!state.inventory[username]) {
     state.inventory[username] = [];
   }
+  if (!state.decks[username]) {
+    state.decks[username] = [];
+  }
 };
 
 const setStatus = (message) => {
@@ -157,6 +184,51 @@ const updateWallet = () => {
     return;
   }
   ui.walletBalance.textContent = `Saldo: ${state.balances[state.currentUser]}`;
+};
+
+const buildFilterOptions = () => {
+  const types = new Set();
+  const rarities = new Set();
+  const classes = new Set();
+  state.cards.forEach((card) => {
+    types.add(card.type);
+    rarities.add(card.rarity);
+    classes.add(card.class);
+  });
+
+  const updateSelect = (select, values, label) => {
+    const current = select.value;
+    select.innerHTML = `<option value="">${label}</option>`;
+    [...values]
+      .sort((a, b) => a.localeCompare(b))
+      .forEach((value) => {
+        const option = document.createElement("option");
+        option.value = value;
+        option.textContent = value;
+        select.appendChild(option);
+      });
+    select.value = current;
+  };
+
+  updateSelect(ui.filterType, types, "Tipo (todos)");
+  updateSelect(ui.filterRarity, rarities, "Raridade (todas)");
+  updateSelect(ui.filterClass, classes, "Classe (todas)");
+};
+
+const passesFilters = (card) => {
+  const typeFilter = ui.filterType.value;
+  const rarityFilter = ui.filterRarity.value;
+  const classFilter = ui.filterClass.value;
+  if (typeFilter && card.type !== typeFilter) {
+    return false;
+  }
+  if (rarityFilter && card.rarity !== rarityFilter) {
+    return false;
+  }
+  if (classFilter && card.class !== classFilter) {
+    return false;
+  }
+  return true;
 };
 
 const renderPacks = () => {
@@ -186,6 +258,35 @@ const renderPacks = () => {
   });
 };
 
+const createInventoryCard = (card, inventoryId) => {
+  const container = document.createElement("div");
+  container.className = "inventory-card";
+  container.draggable = true;
+  container.dataset.inventoryId = inventoryId;
+  container.addEventListener("dragstart", (event) => {
+    event.dataTransfer.setData("text/plain", inventoryId);
+  });
+
+  const title = document.createElement("h4");
+  title.textContent = formatCardTitle(card);
+  const meta = document.createElement("p");
+  meta.className = "tiny";
+  meta.textContent = `${card.type} • MOV ${card.move} • Mana ${card.mana} • ${card.class}`;
+  const desc = document.createElement("p");
+  desc.textContent = card.description;
+  const chips = document.createElement("div");
+  chips.className = "chip-row";
+  [card.type, card.rarity, card.class].forEach((label) => {
+    const chip = document.createElement("span");
+    chip.className = "chip";
+    chip.textContent = label;
+    chips.appendChild(chip);
+  });
+
+  container.append(title, meta, desc, chips);
+  return container;
+};
+
 const renderInventory = () => {
   ui.inventoryList.innerHTML = "";
   if (!state.currentUser) {
@@ -197,23 +298,22 @@ const renderInventory = () => {
     ui.inventoryList.textContent = "Nenhuma carta ainda.";
     return;
   }
-  items.forEach((item) => {
+  const visibleItems = items.filter((item) => {
+    const card = state.cards.find((entry) => entry.id === item.cardId);
+    return card && passesFilters(card);
+  });
+
+  if (!visibleItems.length) {
+    ui.inventoryList.textContent = "Nenhuma carta corresponde ao filtro.";
+    return;
+  }
+
+  visibleItems.forEach((item) => {
     const card = state.cards.find((entry) => entry.id === item.cardId);
     if (!card) {
       return;
     }
-    const container = document.createElement("div");
-    container.className = "inventory-card";
-    const title = document.createElement("h4");
-    title.textContent = formatCardTitle(card);
-    const meta = document.createElement("p");
-    meta.className = "tiny";
-    meta.textContent = `${card.type} • MOV ${card.move} • Mana ${card.mana} • ${card.class}`;
-    const desc = document.createElement("p");
-    desc.textContent = card.description;
-
-    container.append(title, meta, desc);
-    ui.inventoryList.appendChild(container);
+    ui.inventoryList.appendChild(createInventoryCard(card, item.id));
   });
 };
 
@@ -234,16 +334,19 @@ const login = () => {
   saveState();
   updateWallet();
   renderInventory();
+  renderDecks();
   updateAdminVisibility();
 };
 
 const logout = () => {
   state.currentUser = null;
+  state.selectedDeckId = null;
   ui.logoutButton.classList.add("hidden");
   setStatus("Nenhum usuário autenticado.");
   saveState();
   updateWallet();
   renderInventory();
+  renderDecks();
   updateAdminVisibility();
 };
 
@@ -280,12 +383,14 @@ const openPack = (packId) => {
     const card = pool[Math.floor(Math.random() * pool.length)];
     pulls.push(card);
     state.inventory[state.currentUser].push({
+      id: crypto.randomUUID(),
       cardId: card.id,
       acquiredAt: new Date().toISOString(),
     });
   }
   saveState();
   updateWallet();
+  buildFilterOptions();
   renderInventory();
   setStatus(`Você abriu ${pack.name} e recebeu ${pulls.map(formatCardTitle).join(", ")}.`);
 };
@@ -330,6 +435,7 @@ const addCard = () => {
     description,
   });
   saveState();
+  buildFilterOptions();
   ui.adminStatus.textContent = `Carta ${name} salva.`;
   ui.cardName.value = "";
   ui.cardType.value = "";
@@ -365,6 +471,159 @@ const addPack = () => {
   ui.packSlots.value = "3";
 };
 
+const createDeck = () => {
+  if (!state.currentUser) {
+    ui.deckStatus.textContent = "Faça login para criar um deck.";
+    return;
+  }
+  const name = ui.deckName.value.trim();
+  if (!name) {
+    ui.deckStatus.textContent = "Digite um nome para o deck.";
+    return;
+  }
+  const decks = state.decks[state.currentUser] || [];
+  const deck = {
+    id: crypto.randomUUID(),
+    name,
+    cardIds: [],
+  };
+  decks.push(deck);
+  state.decks[state.currentUser] = decks;
+  state.selectedDeckId = deck.id;
+  ui.deckName.value = "";
+  saveState();
+  renderDecks();
+  ui.deckStatus.textContent = `Deck ${name} criado.`;
+};
+
+const getSelectedDeck = () => {
+  const decks = state.decks[state.currentUser] || [];
+  return decks.find((deck) => deck.id === state.selectedDeckId) || null;
+};
+
+const renderDecks = () => {
+  ui.deckList.innerHTML = "";
+  ui.deckCards.innerHTML = "";
+  ui.deckDropzone.classList.remove("hidden");
+  if (!state.currentUser) {
+    ui.deckTitle.textContent = "Faça login para criar decks";
+    ui.deckCount.textContent = "0 cartas";
+    ui.deckDropzone.classList.add("hidden");
+    return;
+  }
+  const decks = state.decks[state.currentUser] || [];
+  if (!decks.length) {
+    ui.deckTitle.textContent = "Crie seu primeiro deck";
+    ui.deckCount.textContent = "0 cartas";
+  }
+
+  decks.forEach((deck) => {
+    const item = document.createElement("li");
+    const button = document.createElement("button");
+    button.textContent = `${deck.name} (${deck.cardIds.length})`;
+    button.classList.toggle("active", deck.id === state.selectedDeckId);
+    button.addEventListener("click", () => {
+      state.selectedDeckId = deck.id;
+      renderDecks();
+    });
+    item.appendChild(button);
+    ui.deckList.appendChild(item);
+  });
+
+  const selectedDeck = getSelectedDeck();
+  if (!selectedDeck) {
+    ui.deckTitle.textContent = "Selecione um deck";
+    ui.deckCount.textContent = "0 cartas";
+    return;
+  }
+  ui.deckTitle.textContent = selectedDeck.name;
+  ui.deckCount.textContent = `${selectedDeck.cardIds.length} cartas`;
+
+  if (selectedDeck.cardIds.length < 20) {
+    ui.deckStatus.textContent = `Deck precisa de mais ${20 - selectedDeck.cardIds.length} cartas para o mínimo.`;
+  } else {
+    ui.deckStatus.textContent = "Deck pronto para uso.";
+  }
+
+  selectedDeck.cardIds.forEach((inventoryId) => {
+    const item = (state.inventory[state.currentUser] || []).find((entry) => entry.id === inventoryId);
+    if (!item) {
+      return;
+    }
+    const card = state.cards.find((entry) => entry.id === item.cardId);
+    if (!card) {
+      return;
+    }
+    const container = document.createElement("div");
+    container.className = "deck-card";
+    const title = document.createElement("h4");
+    title.textContent = formatCardTitle(card);
+    const meta = document.createElement("p");
+    meta.className = "tiny";
+    meta.textContent = `${card.type} • MOV ${card.move} • Mana ${card.mana} • ${card.class}`;
+    const desc = document.createElement("p");
+    desc.textContent = card.description;
+    const remove = document.createElement("button");
+    remove.className = "secondary";
+    remove.textContent = "Remover do deck";
+    remove.addEventListener("click", () => removeFromDeck(inventoryId));
+
+    container.append(title, meta, desc, remove);
+    ui.deckCards.appendChild(container);
+  });
+};
+
+const addToDeck = (inventoryId) => {
+  if (!state.currentUser) {
+    return;
+  }
+  const selectedDeck = getSelectedDeck();
+  if (!selectedDeck) {
+    ui.deckStatus.textContent = "Selecione um deck antes de adicionar cartas.";
+    return;
+  }
+  if (!selectedDeck.cardIds.includes(inventoryId)) {
+    selectedDeck.cardIds.push(inventoryId);
+    saveState();
+    renderDecks();
+  }
+};
+
+const removeFromDeck = (inventoryId) => {
+  const selectedDeck = getSelectedDeck();
+  if (!selectedDeck) {
+    return;
+  }
+  selectedDeck.cardIds = selectedDeck.cardIds.filter((id) => id !== inventoryId);
+  saveState();
+  renderDecks();
+};
+
+const initDragAndDrop = () => {
+  ui.deckDropzone.addEventListener("dragover", (event) => {
+    event.preventDefault();
+    ui.deckDropzone.classList.add("dragover");
+  });
+  ui.deckDropzone.addEventListener("dragleave", () => {
+    ui.deckDropzone.classList.remove("dragover");
+  });
+  ui.deckDropzone.addEventListener("drop", (event) => {
+    event.preventDefault();
+    ui.deckDropzone.classList.remove("dragover");
+    const inventoryId = event.dataTransfer.getData("text/plain");
+    if (inventoryId) {
+      addToDeck(inventoryId);
+    }
+  });
+};
+
+const clearFilters = () => {
+  ui.filterType.value = "";
+  ui.filterRarity.value = "";
+  ui.filterClass.value = "";
+  renderInventory();
+};
+
 const init = () => {
   loadState();
   if (state.currentUser) {
@@ -372,10 +631,13 @@ const init = () => {
     ui.logoutButton.classList.remove("hidden");
     setStatus(`Logado como ${state.currentUser}.`);
   }
+  buildFilterOptions();
   updateWallet();
   renderPacks();
   renderInventory();
+  renderDecks();
   updateAdminVisibility();
+  initDragAndDrop();
 };
 
 ui.loginButton.addEventListener("click", login);
@@ -383,5 +645,10 @@ ui.logoutButton.addEventListener("click", logout);
 ui.addFunds.addEventListener("click", addFunds);
 ui.addCard.addEventListener("click", addCard);
 ui.addPack.addEventListener("click", addPack);
+ui.createDeck.addEventListener("click", createDeck);
+ui.filterType.addEventListener("change", renderInventory);
+ui.filterRarity.addEventListener("change", renderInventory);
+ui.filterClass.addEventListener("change", renderInventory);
+ui.clearFilters.addEventListener("click", clearFilters);
 
 init();

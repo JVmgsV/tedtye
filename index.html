@@ -9,7 +9,7 @@
   <body>
     <header class="site-header">
       <h1>Beta de Cartas</h1>
-      <p>Protótipo local para testar login, packs e abertura de cartas.</p>
+      <p>Protótipo local para testar login, packs, inventário e construção de decks.</p>
     </header>
 
     <main class="container">
@@ -39,8 +39,55 @@
       </section>
 
       <section class="card" id="inventory-card">
-        <h2>Inventário</h2>
+        <div class="section-header">
+          <div>
+            <h2>Inventário</h2>
+            <p>Arraste cartas para montar seus decks.</p>
+          </div>
+          <div class="filters">
+            <select id="filter-type">
+              <option value="">Tipo (todos)</option>
+            </select>
+            <select id="filter-rarity">
+              <option value="">Raridade (todas)</option>
+            </select>
+            <select id="filter-class">
+              <option value="">Classe (todas)</option>
+            </select>
+            <button id="clear-filters" class="secondary">Limpar</button>
+          </div>
+        </div>
         <div id="inventory-list" class="grid"></div>
+      </section>
+
+      <section class="card" id="decks-card">
+        <div class="section-header">
+          <div>
+            <h2>Decks</h2>
+            <p>Crie decks com mínimo de 20 cartas.</p>
+          </div>
+          <div class="form-row">
+            <input type="text" id="deck-name" placeholder="Nome do deck" />
+            <button id="create-deck">Criar deck</button>
+          </div>
+        </div>
+        <div class="deck-layout">
+          <aside class="deck-list">
+            <h3>Meus decks</h3>
+            <ul id="deck-list"></ul>
+          </aside>
+          <div class="deck-workspace">
+            <div class="deck-header">
+              <h3 id="deck-title">Selecione um deck</h3>
+              <span id="deck-count" class="badge">0 cartas</span>
+            </div>
+            <div id="deck-dropzone" class="dropzone">
+              <p>Arraste cartas do inventário para cá.</p>
+            </div>
+            <div id="deck-cards" class="grid"></div>
+            <p class="status" id="deck-status"></p>
+          </div>
+        </div>
       </section>
 
       <section class="card hidden" id="admin-card">
