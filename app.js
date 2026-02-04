@@ -781,6 +781,9 @@ const init = () => {
     ui.logoutButton.classList.remove("hidden");
     setStatus(`Logado como ${state.currentUser}.`);
   }
+  closeOverlay(ui.storeOverlay);
+  closeOverlay(ui.adminOverlay);
+  closeOverlay(ui.playOverlay);
   buildFilterOptions();
   renderCharacters();
   renderPacks();
