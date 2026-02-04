@@ -184,6 +184,23 @@
       </div>
     </section>
 
+    <section class="overlay pack-modal hidden" id="pack-modal" hidden>
+      <div class="overlay-content pack-modal-content">
+        <div class="overlay-header">
+          <h2>Abrindo pack</h2>
+          <button class="secondary" id="close-pack-modal">Fechar</button>
+        </div>
+        <div class="pack-modal-body">
+          <div class="pack-roll">
+            <span class="pack-roll__label">Resultado do dado</span>
+            <span id="pack-roll-result" class="pack-roll__value">-</span>
+          </div>
+          <p id="pack-roll-status" class="status"></p>
+          <div id="pack-result-cards" class="grid"></div>
+        </div>
+      </div>
+    </section>
+
     <footer class="site-footer">
       <p>Dados são salvos apenas no navegador (localStorage).</p>
     </footer>

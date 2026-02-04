@@ -416,6 +416,42 @@ button.secondary {
   min-height: 320px;
 }
 
+.pack-modal-content {
+  max-width: 900px;
+}
+
+.pack-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.pack-roll {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.pack-roll__label {
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.pack-roll__value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--accent-dark);
+  background: #f4f4ff;
+  border-radius: 10px;
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+}
+
+.pack-result-card {
+  min-height: 200px;
+}
+
 .deck-layout {
   display: grid;
   grid-template-columns: minmax(200px, 240px) 1fr;

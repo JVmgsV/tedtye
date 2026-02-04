@@ -69,6 +69,11 @@ const ui = {
   cardModal: document.getElementById("card-modal"),
   closeCardModal: document.getElementById("close-card-modal"),
   cardModalBody: document.getElementById("card-modal-body"),
+  packModal: document.getElementById("pack-modal"),
+  closePackModal: document.getElementById("close-pack-modal"),
+  packRollResult: document.getElementById("pack-roll-result"),
+  packRollStatus: document.getElementById("pack-roll-status"),
+  packResultCards: document.getElementById("pack-result-cards"),
 };
 
 const defaultCards = [
@@ -614,6 +619,7 @@ const state = {
   selectedCharacter: null,
   selectedDeck: null,
   adminPassword: "1234",
+  isOpeningPack: false,
 };
 
 const storage = {
@@ -909,7 +915,8 @@ const renderPacks = () => {
       badge.textContent = chanceLabels.length ? chanceLabels.join(" • ") : "Sem chances configuradas";
     }
     const openButton = document.createElement("button");
-    openButton.textContent = "Comprar e abrir";
+    openButton.textContent = state.isOpeningPack ? "Abrindo..." : "Comprar e abrir";
+    openButton.disabled = state.isOpeningPack;
     openButton.addEventListener("click", () => openPack(pack.id));
 
     container.append(title, price, slots, badge, openButton);
@@ -1091,7 +1098,7 @@ const updateBalance = () => {
 
 const rollDice = (sides) => Math.floor(Math.random() * sides) + 1;
 
-const animateRoll = (sides, duration = 900) =>
+const animateRoll = async (sides, duration = 900) =>
   new Promise((resolve) => {
     let elapsed = 0;
     const interval = 90;
@@ -1099,6 +1106,8 @@ const animateRoll = (sides, duration = 900) =>
       elapsed += interval;
       const value = rollDice(sides);
       setStatus(`Rolando 1d${sides}... ${value}`);
+      ui.packRollResult.textContent = value;
+      ui.packRollStatus.textContent = `Rolando 1d${sides}...`;
       if (elapsed >= duration) {
         clearInterval(ticker);
         resolve();
@@ -1124,6 +1133,9 @@ const pickCardByRarity = (rarity) => {
 };
 
 const openPack = async (packId) => {
+  if (state.isOpeningPack) {
+    return;
+  }
   const ownerKey = getOwnerKey();
   if (!ownerKey) {
     setStatus("Selecione um personagem para comprar packs.");
@@ -1138,6 +1150,12 @@ const openPack = async (packId) => {
     return;
   }
   state.balances[ownerKey] -= pack.price;
+  state.isOpeningPack = true;
+  renderPacks();
+  ui.packResultCards.innerHTML = "";
+  ui.packRollResult.textContent = "-";
+  ui.packRollStatus.textContent = "";
+  openOverlay(ui.packModal);
   const pulls = [];
   let resultInfo = "";
   let foilApplied = false;
@@ -1146,6 +1164,8 @@ const openPack = async (packId) => {
     const rollResult = rollPackWithTable(pack);
     resultInfo = ` (1d${pack.rollTable.length} = ${rollResult.roll})`;
     foilApplied = rollResult.foil;
+    ui.packRollResult.textContent = rollResult.roll;
+    ui.packRollStatus.textContent = `Resultado do dado${foilApplied ? " • Foil!" : ""}`;
     rollResult.rarities.forEach((rarity) => {
       const card = pickCardByRarity(rarity);
       pulls.push(card);
@@ -1172,12 +1192,24 @@ const openPack = async (packId) => {
   saveState();
   updateWallet();
   renderInventory();
+  ui.packResultCards.innerHTML = "";
+  pulls.forEach((card) => {
+    const cardEl = buildCardElement(card, {
+      className: "inventory-card pack-result-card",
+      foil: foilApplied,
+    });
+    ui.packResultCards.appendChild(cardEl);
+  });
   const foilNote = foilApplied ? " (Foil!)" : "";
   setStatus(
     `Você abriu ${pack.name}${resultInfo}${foilNote} e recebeu ${pulls
       .map(formatCardTitle)
       .join(", ")}.`,
   );
+  setTimeout(() => {
+    state.isOpeningPack = false;
+    renderPacks();
+  }, 400);
 };
 
 const rollRarity = (chances) => {
@@ -1465,6 +1497,7 @@ const init = async () => {
   closeOverlay(ui.storeOverlay);
   closeOverlay(ui.adminOverlay);
   closeOverlay(ui.cardModal);
+  closeOverlay(ui.packModal);
   buildFilterOptions();
   renderCharacters();
   renderPacks();
@@ -1494,6 +1527,12 @@ ui.closeCardModal.addEventListener("click", () => closeOverlay(ui.cardModal));
 ui.cardModal.addEventListener("click", (event) => {
   if (event.target === ui.cardModal) {
     closeOverlay(ui.cardModal);
+  }
+});
+ui.closePackModal.addEventListener("click", () => closeOverlay(ui.packModal));
+ui.packModal.addEventListener("click", (event) => {
+  if (event.target === ui.packModal) {
+    closeOverlay(ui.packModal);
   }
 });
 ui.addCard.addEventListener("click", addCard);
