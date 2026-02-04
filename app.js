@@ -751,6 +751,12 @@ const closeOverlay = (overlay) => {
   overlay.hidden = true;
 };
 
+const closeAllOverlays = () => {
+  closeOverlay(ui.storeOverlay);
+  closeOverlay(ui.adminOverlay);
+  closeOverlay(ui.playOverlay);
+};
+
 const handleAdminLogin = () => {
   const password = ui.adminPasswordInput.value.trim();
   if (!password) {
@@ -781,9 +787,7 @@ const init = () => {
     ui.logoutButton.classList.remove("hidden");
     setStatus(`Logado como ${state.currentUser}.`);
   }
-  closeOverlay(ui.storeOverlay);
-  closeOverlay(ui.adminOverlay);
-  closeOverlay(ui.playOverlay);
+  closeAllOverlays();
   buildFilterOptions();
   renderCharacters();
   renderPacks();
@@ -795,7 +799,7 @@ ui.logoutButton.addEventListener("click", logout);
 ui.createCharacter.addEventListener("click", createCharacter);
 ui.addFunds.addEventListener("click", updateBalance);
 ui.openStore.addEventListener("click", () => openOverlay(ui.storeOverlay));
-ui.closeStore.addEventListener("click", () => closeOverlay(ui.storeOverlay));
+ui.closeStore.addEventListener("click", closeAllOverlays);
 ui.openAdmin.addEventListener("click", () => {
   if (!state.currentUser) {
     setStatus("Faça login para acessar o admin.");
@@ -807,7 +811,7 @@ ui.openAdmin.addEventListener("click", () => {
   ui.adminPanel.classList.add("hidden");
   openOverlay(ui.adminOverlay);
 });
-ui.closeAdmin.addEventListener("click", () => closeOverlay(ui.adminOverlay));
+ui.closeAdmin.addEventListener("click", closeAllOverlays);
 ui.adminLoginButton.addEventListener("click", handleAdminLogin);
 ui.addCard.addEventListener("click", addCard);
 ui.addPack.addEventListener("click", addPack);
@@ -817,6 +821,6 @@ ui.filterRarity.addEventListener("change", renderInventory);
 ui.filterClass.addEventListener("change", renderInventory);
 ui.clearFilters.addEventListener("click", clearFilters);
 ui.playButton.addEventListener("click", handlePlay);
-ui.closePlay.addEventListener("click", () => closeOverlay(ui.playOverlay));
+ui.closePlay.addEventListener("click", closeAllOverlays);
 
 init();
