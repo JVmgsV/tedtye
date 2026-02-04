@@ -743,10 +743,12 @@ const clearFilters = () => {
 
 const openOverlay = (overlay) => {
   overlay.classList.remove("hidden");
+  overlay.hidden = false;
 };
 
 const closeOverlay = (overlay) => {
   overlay.classList.add("hidden");
+  overlay.hidden = true;
 };
 
 const handleAdminLogin = () => {
