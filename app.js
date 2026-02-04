@@ -145,9 +145,46 @@ const storage = {
   },
 };
 
+const api = {
+  available: null,
+  async loadState() {
+    try {
+      const response = await fetch("/api/state", { cache: "no-store" });
+      if (!response.ok) {
+        throw new Error("API indisponível");
+      }
+      this.available = true;
+      return await response.json();
+    } catch (error) {
+      this.available = false;
+      return null;
+    }
+  },
+  async saveState(payload) {
+    if (!this.available) {
+      return;
+    }
+    await fetch("/api/state", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+  },
+};
+
 const formatCardTitle = (card) => `${card.name} • ${card.rarity}`;
 
-const loadState = () => {
+const normalizeInventory = () => {
+  Object.keys(state.inventory).forEach((ownerId) => {
+    state.inventory[ownerId] = state.inventory[ownerId].map((item) => ({
+      id: item.id || crypto.randomUUID(),
+      cardId: item.cardId,
+      acquiredAt: item.acquiredAt || new Date().toISOString(),
+    }));
+  });
+};
+
+const loadStateFromStorage = () => {
   state.users = storage.load(storageKeys.users, []);
   state.cards = storage.load(storageKeys.cards, defaultCards);
   state.packs = storage.load(storageKeys.packs, defaultPacks);
@@ -159,17 +196,48 @@ const loadState = () => {
   state.selectedCharacter = storage.load(storageKeys.selectedCharacter, null);
   state.selectedDeck = storage.load(storageKeys.selectedDeck, null);
   state.adminPassword = storage.load(storageKeys.adminPassword, "1234");
-
-  Object.keys(state.inventory).forEach((ownerId) => {
-    state.inventory[ownerId] = state.inventory[ownerId].map((item) => ({
-      id: item.id || crypto.randomUUID(),
-      cardId: item.cardId,
-      acquiredAt: item.acquiredAt || new Date().toISOString(),
-    }));
-  });
+  normalizeInventory();
 };
 
-const saveState = () => {
+const assignState = (payload) => {
+  state.users = payload.users || [];
+  state.cards = payload.cards || defaultCards;
+  state.packs = payload.packs || defaultPacks;
+  state.inventory = payload.inventory || {};
+  state.balances = payload.balances || {};
+  state.decks = payload.decks || {};
+  state.characters = payload.characters || {};
+  state.adminPassword = payload.adminPassword || "1234";
+  state.currentUser = payload.currentUser || null;
+  state.selectedCharacter = payload.selectedCharacter || null;
+  state.selectedDeck = payload.selectedDeck || null;
+  normalizeInventory();
+};
+
+const buildSnapshot = () => ({
+  users: state.users,
+  cards: state.cards,
+  packs: state.packs,
+  inventory: state.inventory,
+  balances: state.balances,
+  decks: state.decks,
+  characters: state.characters,
+  currentUser: state.currentUser,
+  selectedCharacter: state.selectedCharacter,
+  selectedDeck: state.selectedDeck,
+  adminPassword: state.adminPassword,
+});
+
+const loadState = async () => {
+  const payload = await api.loadState();
+  if (payload) {
+    assignState(payload);
+    return;
+  }
+  loadStateFromStorage();
+};
+
+const saveStateToStorage = () => {
   storage.save(storageKeys.users, state.users);
   storage.save(storageKeys.cards, state.cards);
   storage.save(storageKeys.packs, state.packs);
@@ -184,6 +252,15 @@ const saveState = () => {
     localStorage.setItem(storageKeys.currentUser, state.currentUser);
   } else {
     localStorage.removeItem(storageKeys.currentUser);
+  }
+};
+
+const saveState = () => {
+  const payload = buildSnapshot();
+  if (api.available) {
+    api.saveState(payload);
+  } else {
+    saveStateToStorage();
   }
 };
 
@@ -762,8 +839,8 @@ const handleAdminLogin = () => {
   ui.adminPanel.classList.remove("hidden");
 };
 
-const init = () => {
-  loadState();
+const init = async () => {
+  await loadState();
   if (state.currentUser) {
     ui.usernameInput.value = state.currentUser;
     ui.logoutButton.classList.remove("hidden");
