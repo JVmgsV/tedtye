@@ -46,10 +46,6 @@ const ui = {
   deckCount: document.getElementById("deck-count"),
   deckCards: document.getElementById("deck-cards"),
   deckStatus: document.getElementById("deck-status"),
-  playButton: document.getElementById("play-button"),
-  playOverlay: document.getElementById("play-overlay"),
-  closePlay: document.getElementById("close-play"),
-  playStatus: document.getElementById("play-status"),
   cardName: document.getElementById("card-name"),
   cardType: document.getElementById("card-type"),
   cardMove: document.getElementById("card-move"),
@@ -766,16 +762,6 @@ const handleAdminLogin = () => {
   ui.adminPanel.classList.remove("hidden");
 };
 
-const handlePlay = () => {
-  const selectedDeck = getSelectedDeck();
-  if (!selectedDeck) {
-    ui.playStatus.textContent = "Selecione um deck antes de jogar.";
-  } else {
-    ui.playStatus.textContent = `Deck selecionado: ${selectedDeck.name}. Tela de jogo em construção.`;
-  }
-  openOverlay(ui.playOverlay);
-};
-
 const init = () => {
   loadState();
   if (state.currentUser) {
@@ -785,7 +771,6 @@ const init = () => {
   }
   closeOverlay(ui.storeOverlay);
   closeOverlay(ui.adminOverlay);
-  closeOverlay(ui.playOverlay);
   buildFilterOptions();
   renderCharacters();
   renderPacks();
@@ -818,7 +803,5 @@ ui.filterType.addEventListener("change", renderInventory);
 ui.filterRarity.addEventListener("change", renderInventory);
 ui.filterClass.addEventListener("change", renderInventory);
 ui.clearFilters.addEventListener("click", clearFilters);
-ui.playButton.addEventListener("click", handlePlay);
-ui.closePlay.addEventListener("click", () => closeOverlay(ui.playOverlay));
 
 init();

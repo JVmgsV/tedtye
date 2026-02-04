@@ -325,11 +325,6 @@ button.secondary {
   gap: 12px;
 }
 
-.deck-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
 
 .overlay {
   position: fixed;
