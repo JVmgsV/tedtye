@@ -2,7 +2,7 @@
   color-scheme: light;
   font-family: "Inter", "Segoe UI", sans-serif;
   --bg: #f6f6f9;
-  --card: #ffffff;
+  --panel: #ffffff;
   --text: #1c1c24;
   --muted: #61627a;
   --accent: #6c63ff;
@@ -20,33 +20,102 @@ body {
   color: var(--text);
 }
 
-.site-header {
-  padding: 32px 20px 16px;
-  text-align: center;
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  padding: 24px;
+  border-bottom: 1px solid var(--border);
+  background: #fff;
+  flex-wrap: wrap;
 }
 
-.site-header h1 {
-  margin-bottom: 8px;
+.top-bar__left {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  flex-wrap: wrap;
 }
 
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px 40px;
+.top-bar__right {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
+  min-width: 240px;
 }
 
-.card {
-  background: var(--card);
+.brand h1 {
+  margin: 0 0 4px;
+}
+
+.brand p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.login-area {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 240px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.top-links {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.link-button {
+  background: transparent;
+  border: none;
+  color: var(--accent-dark);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.wallet-box {
+  background: #f8f8ff;
+  border-radius: 12px;
+  padding: 12px;
+  border: 1px solid var(--border);
+}
+
+.wallet-box .label {
+  margin: 0 0 6px;
+  font-weight: 600;
+}
+
+.main-layout {
+  display: grid;
+  grid-template-columns: 240px 1fr 1fr;
+  gap: 20px;
+  padding: 24px;
+}
+
+.panel {
+  background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 16px;
   padding: 20px;
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.04);
+  min-height: 520px;
 }
 
-.section-header {
+.panel h2 {
+  margin-top: 0;
+}
+
+.panel-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -116,7 +185,7 @@ button.secondary {
 
 .status {
   color: var(--muted);
-  margin-top: 10px;
+  margin: 6px 0 0;
 }
 
 .wallet-row {
@@ -124,6 +193,28 @@ button.secondary {
   justify-content: space-between;
   align-items: center;
   gap: 10px;
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.list button {
+  width: 100%;
+  text-align: left;
+  background: #f0f0ff;
+  color: var(--accent-dark);
+  border: 1px solid var(--border);
+}
+
+.list button.active {
+  background: var(--accent);
+  color: #fff;
 }
 
 .pack {
@@ -147,18 +238,21 @@ button.secondary {
   margin-top: 6px;
 }
 
-.inventory-card {
+.inventory-card,
+.deck-card {
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 14px;
   background: #ffffff;
 }
 
-.inventory-card h4 {
+.inventory-card h4,
+.deck-card h4 {
   margin: 0 0 8px;
 }
 
-.inventory-card .tiny {
+.inventory-card .tiny,
+.deck-card .tiny {
   margin: 0 0 6px;
 }
 
@@ -176,15 +270,11 @@ button.secondary {
   font-size: 11px;
 }
 
-.tiny {
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.admin-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 16px;
+.inventory-actions {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .deck-layout {
@@ -235,41 +325,66 @@ button.secondary {
   gap: 12px;
 }
 
-.dropzone {
-  border: 2px dashed var(--border);
-  border-radius: 12px;
-  padding: 16px;
-  text-align: center;
-  background: #fafaff;
-  color: var(--muted);
+.deck-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-.dropzone.dragover {
-  border-color: var(--accent);
-  color: var(--accent-dark);
-  background: #f2f1ff;
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(14, 16, 24, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 10;
 }
 
-.deck-card {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 12px;
+.overlay-content {
   background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  width: min(1100px, 95vw);
+  max-height: 90vh;
+  overflow: auto;
 }
 
-.deck-card .tiny {
-  margin: 0 0 6px;
+.overlay-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
 }
 
-.deck-card button {
-  width: 100%;
-  margin-top: 8px;
+.admin-login {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.admin-panel {
+  margin-top: 16px;
+}
+
+.admin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
 }
 
 .site-footer {
   text-align: center;
   color: var(--muted);
-  padding-bottom: 30px;
+  padding: 24px 0 40px;
+}
+
+@media (max-width: 1100px) {
+  .main-layout {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 900px) {
