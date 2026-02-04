@@ -61,8 +61,12 @@ const ui = {
   chanceUncommon: document.getElementById("chance-uncommon"),
   chanceRare: document.getElementById("chance-rare"),
   chanceEpic: document.getElementById("chance-epic"),
+  chanceLegendary: document.getElementById("chance-legendary"),
   addPack: document.getElementById("add-pack"),
   adminStatus: document.getElementById("admin-status"),
+  cardModal: document.getElementById("card-modal"),
+  closeCardModal: document.getElementById("close-card-modal"),
+  cardModalBody: document.getElementById("card-modal-body"),
 };
 
 const defaultCards = [
@@ -109,7 +113,8 @@ const defaultPacks = [
       Common: 70,
       Uncommon: 25,
       Rare: 5,
-      Epic: 0,
+      "Ultra Rare": 0,
+      Legendary: 0,
     },
   },
 ];
@@ -173,6 +178,23 @@ const api = {
 };
 
 const formatCardTitle = (card) => `${card.name} • ${card.rarity}`;
+
+const getRarityClass = (rarity) => {
+  const value = String(rarity || "").toLowerCase();
+  if (value.includes("legend")) {
+    return "rarity-legendary";
+  }
+  if (value.includes("ultra") || value.includes("epic")) {
+    return "rarity-ultra-rare";
+  }
+  if (value.includes("rare")) {
+    return "rarity-rare";
+  }
+  if (value.includes("uncommon")) {
+    return "rarity-uncommon";
+  }
+  return "rarity-common";
+};
 
 const normalizeInventory = () => {
   Object.keys(state.inventory).forEach((ownerId) => {
@@ -388,7 +410,10 @@ const renderPacks = () => {
     slots.textContent = `Cartas por pack: ${pack.slots}`;
     const badge = document.createElement("span");
     badge.className = "badge";
-    badge.textContent = `Common ${pack.chances.Common || 0}% • Uncommon ${pack.chances.Uncommon || 0}%`;
+    const chanceLabels = Object.entries(pack.chances || {})
+      .filter(([, value]) => Number(value || 0) > 0)
+      .map(([rarity, value]) => `${rarity} ${value}%`);
+    badge.textContent = chanceLabels.length ? chanceLabels.join(" • ") : "Sem chances configuradas";
     const openButton = document.createElement("button");
     openButton.textContent = "Comprar e abrir";
     openButton.addEventListener("click", () => openPack(pack.id));
@@ -398,9 +423,9 @@ const renderPacks = () => {
   });
 };
 
-const createInventoryCard = (card, inventoryId) => {
+const buildCardElement = (card, options = {}) => {
   const container = document.createElement("div");
-  container.className = "inventory-card";
+  container.className = `${options.className || "inventory-card"} ${getRarityClass(card.rarity)}`;
   const title = document.createElement("h4");
   title.textContent = formatCardTitle(card);
   const meta = document.createElement("p");
@@ -417,6 +442,22 @@ const createInventoryCard = (card, inventoryId) => {
     chips.appendChild(chip);
   });
 
+  container.append(title, meta, desc, chips);
+  if (options.actions) {
+    container.appendChild(options.actions);
+  }
+  if (options.onClick) {
+    container.addEventListener("click", (event) => {
+      if (event.target.closest("button")) {
+        return;
+      }
+      options.onClick();
+    });
+  }
+  return container;
+};
+
+const createInventoryCard = (card, inventoryId) => {
   const actions = document.createElement("div");
   actions.className = "inventory-actions";
   const decks = getDecksForCharacter();
@@ -434,9 +475,11 @@ const createInventoryCard = (card, inventoryId) => {
       actions.appendChild(button);
     });
   }
-
-  container.append(title, meta, desc, chips, actions);
-  return container;
+  return buildCardElement(card, {
+    className: "inventory-card",
+    actions,
+    onClick: () => openCardModal(card),
+  });
 };
 
 const renderInventory = () => {
@@ -635,7 +678,8 @@ const addPack = () => {
     Common: Number(ui.chanceCommon.value || 0),
     Uncommon: Number(ui.chanceUncommon.value || 0),
     Rare: Number(ui.chanceRare.value || 0),
-    Epic: Number(ui.chanceEpic.value || 0),
+    "Ultra Rare": Number(ui.chanceEpic.value || 0),
+    Legendary: Number(ui.chanceLegendary.value || 0),
   };
 
   if (!name || price <= 0 || slots <= 0) {
@@ -721,22 +765,20 @@ const renderDecks = () => {
     if (!card) {
       return;
     }
-    const container = document.createElement("div");
-    container.className = "deck-card";
-    const title = document.createElement("h4");
-    title.textContent = formatCardTitle(card);
-    const meta = document.createElement("p");
-    meta.className = "tiny";
-    meta.textContent = `${card.type} • MOV ${card.move} • Mana ${card.mana} • ${card.class}`;
-    const desc = document.createElement("p");
-    desc.textContent = card.description;
     const remove = document.createElement("button");
     remove.className = "secondary";
     remove.textContent = "Remover do deck";
     remove.addEventListener("click", () => removeFromDeck(selectedDeck.id, inventoryId));
-
-    container.append(title, meta, desc, remove);
-    ui.deckCards.appendChild(container);
+    const actions = document.createElement("div");
+    actions.className = "inventory-actions";
+    actions.appendChild(remove);
+    ui.deckCards.appendChild(
+      buildCardElement(card, {
+        className: "deck-card",
+        actions,
+        onClick: () => openCardModal(card),
+      }),
+    );
   });
 };
 
@@ -824,6 +866,16 @@ const closeOverlay = (overlay) => {
   overlay.hidden = true;
 };
 
+const openCardModal = (card) => {
+  ui.cardModalBody.innerHTML = "";
+  ui.cardModalBody.appendChild(
+    buildCardElement(card, {
+      className: "inventory-card card-modal-card",
+    }),
+  );
+  openOverlay(ui.cardModal);
+};
+
 const handleAdminLogin = () => {
   const password = ui.adminPasswordInput.value.trim();
   if (!password) {
@@ -848,6 +900,7 @@ const init = async () => {
   }
   closeOverlay(ui.storeOverlay);
   closeOverlay(ui.adminOverlay);
+  closeOverlay(ui.cardModal);
   buildFilterOptions();
   renderCharacters();
   renderPacks();
@@ -873,6 +926,12 @@ ui.openAdmin.addEventListener("click", () => {
 });
 ui.closeAdmin.addEventListener("click", () => closeOverlay(ui.adminOverlay));
 ui.adminLoginButton.addEventListener("click", handleAdminLogin);
+ui.closeCardModal.addEventListener("click", () => closeOverlay(ui.cardModal));
+ui.cardModal.addEventListener("click", (event) => {
+  if (event.target === ui.cardModal) {
+    closeOverlay(ui.cardModal);
+  }
+});
 ui.addCard.addEventListener("click", addCard);
 ui.addPack.addEventListener("click", addPack);
 ui.createDeck.addEventListener("click", createDeck);

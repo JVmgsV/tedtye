@@ -135,7 +135,8 @@
                   <option value="Common">Common</option>
                   <option value="Uncommon">Uncommon</option>
                   <option value="Rare">Rare</option>
-                  <option value="Epic">Epic</option>
+                  <option value="Ultra Rare">Ultra Rare</option>
+                  <option value="Legendary">Legendary</option>
                 </select>
                 <textarea id="card-description" placeholder="Descrição"></textarea>
                 <button id="add-card">Salvar carta</button>
@@ -155,7 +156,10 @@
                 </div>
                 <div class="form-row">
                   <input type="number" id="chance-rare" placeholder="Rare" value="5" min="0" />
-                  <input type="number" id="chance-epic" placeholder="Epic" value="0" min="0" />
+                  <input type="number" id="chance-epic" placeholder="Ultra Rare" value="0" min="0" />
+                </div>
+                <div class="form-row">
+                  <input type="number" id="chance-legendary" placeholder="Legendary" value="0" min="0" />
                 </div>
                 <button id="add-pack">Salvar pack</button>
               </div>
@@ -163,6 +167,16 @@
           </div>
           <p class="status" id="admin-status"></p>
         </div>
+      </div>
+    </section>
+
+    <section class="overlay card-modal hidden" id="card-modal" hidden>
+      <div class="overlay-content card-modal-content">
+        <div class="overlay-header">
+          <h2>Detalhes da carta</h2>
+          <button class="secondary" id="close-card-modal">Fechar</button>
+        </div>
+        <div id="card-modal-body" class="card-modal-body"></div>
       </div>
     </section>
 

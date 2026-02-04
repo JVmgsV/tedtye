@@ -248,9 +248,9 @@ button.secondary {
   border-radius: 18px;
   padding: 16px;
   color: #f7f6ff;
-  background: linear-gradient(180deg, #1d1b4c 0%, #2c2a74 100%);
-  border: 2px solid rgba(255, 255, 255, 0.18);
-  box-shadow: 0 16px 30px rgba(12, 12, 40, 0.2);
+  background: linear-gradient(180deg, var(--rarity-color, #f8f8f5) 0%, #1d1b4c 55%, #2c2a74 100%);
+  border: 2px solid var(--rarity-color, #f8f8f5);
+  box-shadow: 0 16px 30px rgba(12, 12, 40, 0.2), 0 0 0 2px rgba(255, 255, 255, 0.08) inset;
   overflow: hidden;
   min-height: 220px;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -264,6 +264,27 @@ button.secondary {
   border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.25);
   pointer-events: none;
+}
+
+.rarity-common {
+  --rarity-color: #f8f8f5;
+}
+
+.rarity-uncommon {
+  --rarity-color: #14b10c;
+}
+
+.rarity-rare {
+  --rarity-color: #276cba;
+}
+
+.rarity-ultra-rare,
+.rarity-epic {
+  --rarity-color: #89077a;
+}
+
+.rarity-legendary {
+  --rarity-color: #b2813e;
 }
 
 .inventory-card:hover,
@@ -285,6 +306,7 @@ button.secondary {
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.4);
   background: rgba(10, 8, 40, 0.6);
+  color: #f7f6ff;
 }
 
 .inventory-card .tiny,
@@ -319,7 +341,7 @@ button.secondary {
   border-radius: 999px;
   padding: 2px 10px;
   font-size: 11px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid var(--rarity-color);
 }
 
 .inventory-actions {
@@ -333,6 +355,25 @@ button.secondary {
   background: rgba(255, 255, 255, 0.15);
   color: #fff;
   border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.card-modal {
+  backdrop-filter: blur(6px);
+}
+
+.card-modal-content {
+  max-width: 560px;
+}
+
+.card-modal-body {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+.card-modal-card {
+  width: min(440px, 90vw);
+  min-height: 320px;
 }
 
 .deck-layout {
