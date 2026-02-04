@@ -183,6 +183,10 @@ button.secondary {
   display: none;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 .status {
   color: var(--muted);
   margin: 6px 0 0;
