@@ -1,4 +1,4 @@
-# Beta de Cartas
+# Ted Tye Decks
 
 Este é um protótipo simples para testar login, personagens, loja, inventário e construção de decks com persistência usando Vercel KV (ou arquivo JSON local).
 

@@ -3,42 +3,77 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Beta de Cartas</title>
+    <title>Ted Tye Decks</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <header class="top-bar">
-      <div class="top-bar__left">
-        <div class="brand">
-          <h1>Beta de Cartas</h1>
-          <p>Construa personagens, compre packs na loja e monte seus decks.</p>
-        </div>
-        <div class="login-area">
-          <label class="field">
-            <span>Login</span>
-            <input type="text" id="username-input" placeholder="Digite seu usuário" />
-          </label>
-          <button id="login-button">Entrar</button>
-          <button id="logout-button" class="secondary hidden">Sair</button>
-          <p class="status" id="login-status">Nenhum usuário autenticado.</p>
+    <aside class="side-rail" id="side-rail">
+      <div class="side-rail__brand">
+        <span class="side-rail__logo">TT</span>
+        <div>
+          <p class="side-rail__eyebrow">Menu fixo</p>
+          <h2>Central Ted Tye</h2>
         </div>
       </div>
-      <div class="top-bar__right">
-        <nav class="top-links">
-          <button class="link-button" id="open-store">Loja</button>
-          <button class="link-button" id="open-admin">Admin</button>
-        </nav>
-        <div class="wallet-box">
-          <p class="label">Carteira</p>
-          <div class="wallet-row">
-            <span id="wallet-balance">Saldo: 0</span>
-            <button id="add-funds">Adicionar 100 moedas</button>
+      <div class="side-rail__profile">
+        <div>
+          <p class="label">Usuário</p>
+          <p id="sidebar-user" class="value">Nenhum usuário</p>
+        </div>
+        <div>
+          <p class="label">Personagem ativo</p>
+          <p id="sidebar-character" class="value">Selecione um personagem</p>
+        </div>
+        <div>
+          <p class="label">Saldo</p>
+          <p id="sidebar-balance" class="value">0 moedas</p>
+        </div>
+      </div>
+      <nav class="side-rail__nav">
+        <button id="sidebar-open-store">Loja</button>
+        <button id="open-decks-view">Decks completos</button>
+        <button id="sidebar-open-admin" class="secondary">Área admin</button>
+      </nav>
+      <div class="side-rail__hint">
+        <p>Use o menu lateral para navegar entre os módulos.</p>
+      </div>
+    </aside>
+
+    <div class="page-content">
+      <header class="top-bar">
+        <button id="open-sidebar" class="menu-button" aria-label="Abrir menu">☰</button>
+        <button id="top-center-action" class="top-center-button">Ação especial</button>
+        <div class="top-bar__left">
+          <div class="brand">
+            <h1>Ted Tye Decks</h1>
+            <p>Construa personagens, gerencie o inventário e monte seus decks.</p>
+          </div>
+          <div class="login-area">
+            <label class="field">
+              <span>Login</span>
+              <input type="text" id="username-input" placeholder="Digite seu usuário" />
+            </label>
+            <button id="login-button">Entrar</button>
+            <button id="logout-button" class="secondary hidden">Sair</button>
+            <p class="status" id="login-status">Nenhum usuário autenticado.</p>
           </div>
         </div>
-      </div>
-    </header>
+        <div class="top-bar__right">
+          <nav class="top-links">
+            <button class="link-button" id="open-store">Loja</button>
+            <button class="link-button" id="open-admin">Admin</button>
+          </nav>
+          <div class="wallet-box">
+            <p class="label">Carteira</p>
+            <div class="wallet-row">
+              <span id="wallet-balance">Saldo: 0</span>
+              <button id="add-funds">Adicionar 100 moedas</button>
+            </div>
+          </div>
+        </div>
+      </header>
 
-    <main class="main-layout">
+      <main class="main-layout">
       <section class="panel" id="character-panel">
         <h2>Personagens</h2>
         <p>Escolha um personagem para usar seus decks e cartas.</p>
@@ -65,7 +100,9 @@
             <select id="filter-class">
               <option value="">Classe (todas)</option>
             </select>
+            <input type="text" id="filter-text" placeholder="Buscar texto" />
             <select id="sort-inventory">
+              <option value="manual">Manual</option>
               <option value="recent">Mais recente</option>
               <option value="oldest">Mais antiga</option>
               <option value="az">A → Z</option>
@@ -108,7 +145,9 @@
                 <select id="deck-filter-class">
                   <option value="">Classe (todas)</option>
                 </select>
+                <input type="text" id="deck-filter-text" placeholder="Buscar texto" />
                 <select id="deck-sort">
+                  <option value="manual">Manual</option>
                   <option value="recent">Mais recente</option>
                   <option value="oldest">Mais antiga</option>
                   <option value="az">A → Z</option>
@@ -121,7 +160,30 @@
             </div>
           </div>
         </section>
-    </main>
+      </main>
+
+    <section class="overlay hidden" id="decks-view-overlay" hidden>
+      <div class="overlay-content decks-view-content">
+        <div class="overlay-header">
+          <h2>Decks por personagem</h2>
+          <button class="secondary" id="close-decks-view">Fechar</button>
+        </div>
+        <div id="decks-view-body" class="decks-view-body"></div>
+      </div>
+    </section>
+
+    <section class="overlay hidden" id="deck-detail-overlay" hidden>
+      <div class="overlay-content deck-detail-content">
+        <div class="overlay-header">
+          <div>
+            <p class="status" id="deck-detail-owner">Personagem</p>
+            <h2 id="deck-detail-title">Deck</h2>
+          </div>
+          <button class="secondary" id="close-deck-detail">Fechar</button>
+        </div>
+        <div id="deck-detail-body" class="grid"></div>
+      </div>
+    </section>
 
     <section class="overlay hidden" id="store-overlay" hidden>
       <div class="overlay-content">
@@ -220,14 +282,16 @@
             <span id="pack-roll-result" class="pack-roll__value">-</span>
           </div>
           <p id="pack-roll-status" class="status"></p>
+          <div id="pack-roll-rarities" class="pack-roll-rarities"></div>
           <div id="pack-result-cards" class="grid"></div>
         </div>
       </div>
     </section>
 
-    <footer class="site-footer">
-      <p>Dados são salvos apenas no navegador (localStorage).</p>
-    </footer>
+      <footer class="site-footer">
+        <p>Dados são salvos apenas no navegador (localStorage).</p>
+      </footer>
+    </div>
 
     <script src="app.js"></script>
   </body>

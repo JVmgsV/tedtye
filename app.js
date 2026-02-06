@@ -35,11 +35,13 @@ const ui = {
   filterType: document.getElementById("filter-type"),
   filterRarity: document.getElementById("filter-rarity"),
   filterClass: document.getElementById("filter-class"),
+  filterText: document.getElementById("filter-text"),
   sortInventory: document.getElementById("sort-inventory"),
   clearFilters: document.getElementById("clear-filters"),
   deckFilterType: document.getElementById("deck-filter-type"),
   deckFilterRarity: document.getElementById("deck-filter-rarity"),
   deckFilterClass: document.getElementById("deck-filter-class"),
+  deckFilterText: document.getElementById("deck-filter-text"),
   deckSort: document.getElementById("deck-sort"),
   deckClearFilters: document.getElementById("deck-clear-filters"),
   characterName: document.getElementById("character-name"),
@@ -79,7 +81,24 @@ const ui = {
   closePackModal: document.getElementById("close-pack-modal"),
   packRollResult: document.getElementById("pack-roll-result"),
   packRollStatus: document.getElementById("pack-roll-status"),
+  packRollRarities: document.getElementById("pack-roll-rarities"),
   packResultCards: document.getElementById("pack-result-cards"),
+  openSidebar: document.getElementById("open-sidebar"),
+  sideRail: document.getElementById("side-rail"),
+  openDecksView: document.getElementById("open-decks-view"),
+  decksViewOverlay: document.getElementById("decks-view-overlay"),
+  closeDecksView: document.getElementById("close-decks-view"),
+  decksViewBody: document.getElementById("decks-view-body"),
+  deckDetailOverlay: document.getElementById("deck-detail-overlay"),
+  closeDeckDetail: document.getElementById("close-deck-detail"),
+  deckDetailTitle: document.getElementById("deck-detail-title"),
+  deckDetailOwner: document.getElementById("deck-detail-owner"),
+  deckDetailBody: document.getElementById("deck-detail-body"),
+  sidebarUser: document.getElementById("sidebar-user"),
+  sidebarCharacter: document.getElementById("sidebar-character"),
+  sidebarBalance: document.getElementById("sidebar-balance"),
+  sidebarOpenStore: document.getElementById("sidebar-open-store"),
+  sidebarOpenAdmin: document.getElementById("sidebar-open-admin"),
 };
 
 const defaultCards = [
@@ -810,13 +829,23 @@ const getOwnerKey = () => {
   return character ? character.id : null;
 };
 
-const updateWallet = () => {
-  const ownerKey = getOwnerKey();
-  if (!ownerKey) {
-    ui.walletBalance.textContent = "Saldo: 0";
+const updateSidebarSummary = () => {
+  if (!ui.sidebarUser) {
     return;
   }
-  ui.walletBalance.textContent = `Saldo: ${state.balances[ownerKey] || 0}`;
+  ui.sidebarUser.textContent = state.currentUser || "Nenhum usuário";
+  const character = getSelectedCharacter();
+  ui.sidebarCharacter.textContent = character ? character.name : "Selecione um personagem";
+  const ownerKey = getOwnerKey();
+  const balance = ownerKey ? state.balances[ownerKey] || 0 : 0;
+  ui.sidebarBalance.textContent = `${balance} moedas`;
+};
+
+const updateWallet = () => {
+  const ownerKey = getOwnerKey();
+  const balance = ownerKey ? state.balances[ownerKey] || 0 : 0;
+  ui.walletBalance.textContent = `Saldo: ${balance}`;
+  updateSidebarSummary();
 };
 
 const buildFilterOptions = () => {
@@ -855,6 +884,7 @@ const passesFilters = (card, filters) => {
   const typeFilter = filters.type;
   const rarityFilter = filters.rarity;
   const classFilter = filters.class;
+  const textFilter = filters.text;
   if (typeFilter && card.type !== typeFilter) {
     return false;
   }
@@ -864,6 +894,14 @@ const passesFilters = (card, filters) => {
   if (classFilter && card.class !== classFilter) {
     return false;
   }
+  if (textFilter) {
+    const haystack = `${card.name} ${card.description} ${card.type} ${card.rarity} ${card.class}`
+      .toLowerCase()
+      .trim();
+    if (!haystack.includes(textFilter)) {
+      return false;
+    }
+  }
   return true;
 };
 
@@ -871,16 +909,21 @@ const getInventoryFilters = () => ({
   type: ui.filterType.value,
   rarity: ui.filterRarity.value,
   class: ui.filterClass.value,
+  text: ui.filterText.value.trim().toLowerCase(),
 });
 
 const getDeckFilters = () => ({
   type: ui.deckFilterType.value,
   rarity: ui.deckFilterRarity.value,
   class: ui.deckFilterClass.value,
+  text: ui.deckFilterText.value.trim().toLowerCase(),
 });
 
 const sortItems = (items, sortKey) => {
   const sort = sortKey || "recent";
+  if (sort === "manual") {
+    return [...items];
+  }
   if (sort === "az" || sort === "za") {
     return [...items].sort((a, b) => {
       const nameA = a.card.name.toLowerCase();
@@ -912,6 +955,7 @@ const renderCharacters = () => {
   }
   characters.forEach((character) => {
     const item = document.createElement("li");
+    item.className = "list-item";
     const button = document.createElement("button");
     button.textContent = character.name;
     button.classList.toggle("active", character.id === state.selectedCharacter);
@@ -920,8 +964,18 @@ const renderCharacters = () => {
       state.selectedDeck = null;
       saveState();
       refreshForCharacter();
+      ui.characterList.querySelectorAll(".list-item").forEach((entry) => {
+        entry.classList.remove("active");
+      });
+      item.classList.add("active");
     });
-    item.appendChild(button);
+    const renameAction = document.createElement("button");
+    renameAction.className = "rename-action";
+    renameAction.type = "button";
+    renameAction.textContent = "Renomear";
+    renameAction.addEventListener("click", () => renameCharacter(character.id));
+    item.append(button);
+    item.append(renameAction);
     ui.characterList.appendChild(item);
   });
 };
@@ -1001,6 +1055,12 @@ const buildCardElement = (card, options = {}) => {
       options.onClick();
     });
   }
+  if (options.draggable) {
+    container.setAttribute("draggable", "true");
+  }
+  if (options.dataId) {
+    container.dataset.inventoryId = options.dataId;
+  }
   return container;
 };
 
@@ -1026,6 +1086,8 @@ const createInventoryCard = (card, inventoryId, options = {}) => {
     className: "inventory-card",
     actions,
     foil: options.foil,
+    draggable: true,
+    dataId: inventoryId,
     onClick: () => openCardModal(card, { foil: options.foil }),
   });
 };
@@ -1042,6 +1104,94 @@ const renderInventory = () => {
     ui.inventoryList.textContent = "Nenhuma carta ainda.";
     return;
   }
+  let draggedId = null;
+  let dragTargetId = null;
+  let dragActive = false;
+  const startDrag = (target) => {
+    draggedId = target.dataset.inventoryId;
+    dragTargetId = null;
+    dragActive = true;
+    target.classList.add("dragging");
+  };
+  const endDrag = () => {
+    dragActive = false;
+    ui.inventoryList.querySelectorAll(".inventory-card.dragging").forEach((card) => {
+      card.classList.remove("dragging");
+    });
+  };
+  const finalizeDrag = () => {
+    if (!draggedId || !dragTargetId || dragTargetId === draggedId) {
+      endDrag();
+      return;
+    }
+    const ids = [...items].map((item) => item.id);
+    const fromIndex = ids.indexOf(draggedId);
+    const toIndex = ids.indexOf(dragTargetId);
+    if (fromIndex === -1 || toIndex === -1) {
+      endDrag();
+      return;
+    }
+    ids.splice(fromIndex, 1);
+    ids.splice(toIndex, 0, draggedId);
+    state.inventory[ownerKey] = ids
+      .map((id) => items.find((entry) => entry.id === id))
+      .filter(Boolean);
+    ui.sortInventory.value = "manual";
+    saveState();
+    renderInventory();
+  };
+
+  ui.inventoryList.ondragstart = (event) => {
+    const target = event.target.closest(".inventory-card");
+    if (!target) {
+      return;
+    }
+    startDrag(target);
+    event.dataTransfer.effectAllowed = "move";
+  };
+  ui.inventoryList.ondragover = (event) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+    const target = event.target.closest(".inventory-card");
+    if (target) {
+      dragTargetId = target.dataset.inventoryId;
+    }
+  };
+  ui.inventoryList.ondrop = (event) => {
+    event.preventDefault();
+    const targetCard = event.target.closest(".inventory-card");
+    if (targetCard) {
+      dragTargetId = targetCard.dataset.inventoryId;
+    }
+    finalizeDrag();
+  };
+  ui.inventoryList.ondragend = () => {
+    endDrag();
+  };
+  ui.inventoryList.onpointerdown = (event) => {
+    const target = event.target.closest(".inventory-card");
+    if (!target) {
+      return;
+    }
+    startDrag(target);
+  };
+  ui.inventoryList.onpointermove = (event) => {
+    if (!dragActive) {
+      return;
+    }
+    const hovered = document.elementFromPoint(event.clientX, event.clientY);
+    const target = hovered ? hovered.closest(".inventory-card") : null;
+    if (target) {
+      dragTargetId = target.dataset.inventoryId;
+    }
+  };
+  ui.inventoryList.onpointerup = () => {
+    if (!dragActive) {
+      return;
+    }
+    finalizeDrag();
+    endDrag();
+  };
   const filters = getInventoryFilters();
   const visibleItems = items
     .map((item) => ({ item, card: state.cards.find((entry) => entry.id === item.cardId) }))
@@ -1118,6 +1268,25 @@ const createCharacter = () => {
   refreshForCharacter();
 };
 
+const renameCharacter = (characterId) => {
+  if (!state.currentUser) {
+    return;
+  }
+  const characters = state.characters[state.currentUser] || [];
+  const character = characters.find((entry) => entry.id === characterId);
+  if (!character) {
+    return;
+  }
+  const nextName = window.prompt("Novo nome do personagem:", character.name);
+  if (!nextName || !nextName.trim()) {
+    return;
+  }
+  character.name = nextName.trim();
+  saveState();
+  renderCharacters();
+  updateSidebarSummary();
+};
+
 const updateBalance = () => {
   const ownerKey = getOwnerKey();
   if (!ownerKey) {
@@ -1188,6 +1357,7 @@ const openPack = async (packId) => {
   ui.packResultCards.innerHTML = "";
   ui.packRollResult.textContent = "-";
   ui.packRollStatus.textContent = "";
+  ui.packRollRarities.innerHTML = "";
   openOverlay(ui.packModal);
   const pulls = [];
   let resultInfo = "";
@@ -1199,6 +1369,13 @@ const openPack = async (packId) => {
     foilApplied = rollResult.foil;
     ui.packRollResult.textContent = rollResult.roll;
     ui.packRollStatus.textContent = `Resultado do dado${foilApplied ? " • Foil!" : ""}`;
+    ui.packRollRarities.innerHTML = "";
+    rollResult.rarities.forEach((rarity) => {
+      const chip = document.createElement("span");
+      chip.className = "chip";
+      chip.textContent = rarity;
+      ui.packRollRarities.appendChild(chip);
+    });
     rollResult.rarities.forEach((rarity) => {
       const card = pickCardByRarity(rarity);
       pulls.push(card);
@@ -1221,6 +1398,13 @@ const openPack = async (packId) => {
         foil: false,
       });
     }
+    ui.packRollRarities.innerHTML = "";
+    pulls.forEach((card) => {
+      const chip = document.createElement("span");
+      chip.className = "chip";
+      chip.textContent = card.rarity;
+      ui.packRollRarities.appendChild(chip);
+    });
   }
   saveState();
   updateWallet();
@@ -1340,6 +1524,7 @@ const getSelectedDeck = () => {
 const renderDecks = () => {
   ui.deckList.innerHTML = "";
   ui.deckCards.innerHTML = "";
+  ui.deckCards.onDragOver = null;
   const ownerKey = getOwnerKey();
   if (!ownerKey) {
     ui.deckTitle.textContent = "Selecione um personagem";
@@ -1355,6 +1540,7 @@ const renderDecks = () => {
 
   decks.forEach((deck) => {
     const item = document.createElement("li");
+    item.className = "list-item";
     const button = document.createElement("button");
     button.textContent = `${deck.name} (${deck.cardIds.length})`;
     button.classList.toggle("active", deck.id === state.selectedDeck);
@@ -1362,8 +1548,18 @@ const renderDecks = () => {
       state.selectedDeck = deck.id;
       saveState();
       renderDecks();
+      ui.deckList.querySelectorAll(".list-item").forEach((entry) => {
+        entry.classList.remove("active");
+      });
+      item.classList.add("active");
     });
-    item.appendChild(button);
+    const renameAction = document.createElement("button");
+    renameAction.className = "rename-action";
+    renameAction.type = "button";
+    renameAction.textContent = "Renomear";
+    renameAction.addEventListener("click", () => renameDeck(deck.id));
+    item.append(button);
+    item.append(renameAction);
     ui.deckList.appendChild(item);
   });
 
@@ -1403,6 +1599,93 @@ const renderDecks = () => {
     return;
   }
 
+  let draggedId = null;
+  let dragTargetId = null;
+  let dragActive = false;
+  const startDrag = (target) => {
+    draggedId = target.dataset.inventoryId;
+    dragTargetId = null;
+    dragActive = true;
+    target.classList.add("dragging");
+  };
+  const endDrag = () => {
+    dragActive = false;
+    ui.deckCards.querySelectorAll(".deck-card.dragging").forEach((card) => {
+      card.classList.remove("dragging");
+    });
+  };
+  const finalizeDrag = () => {
+    if (!draggedId || !dragTargetId || dragTargetId === draggedId) {
+      endDrag();
+      return;
+    }
+    const ids = [...selectedDeck.cardIds];
+    const fromIndex = ids.indexOf(draggedId);
+    const toIndex = ids.indexOf(dragTargetId);
+    if (fromIndex === -1 || toIndex === -1) {
+      endDrag();
+      return;
+    }
+    ids.splice(fromIndex, 1);
+    ids.splice(toIndex, 0, draggedId);
+    selectedDeck.cardIds = ids;
+    ui.deckSort.value = "manual";
+    saveState();
+    renderDecks();
+  };
+
+  ui.deckCards.ondragstart = (event) => {
+    const target = event.target.closest(".deck-card");
+    if (!target) {
+      return;
+    }
+    startDrag(target);
+    event.dataTransfer.effectAllowed = "move";
+  };
+  ui.deckCards.ondragover = (event) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+    const target = event.target.closest(".deck-card");
+    if (target) {
+      dragTargetId = target.dataset.inventoryId;
+    }
+  };
+  ui.deckCards.ondrop = (event) => {
+    event.preventDefault();
+    const targetCard = event.target.closest(".deck-card");
+    if (targetCard) {
+      dragTargetId = targetCard.dataset.inventoryId;
+    }
+    finalizeDrag();
+  };
+  ui.deckCards.ondragend = () => {
+    endDrag();
+  };
+  ui.deckCards.onpointerdown = (event) => {
+    const target = event.target.closest(".deck-card");
+    if (!target) {
+      return;
+    }
+    startDrag(target);
+  };
+  ui.deckCards.onpointermove = (event) => {
+    if (!dragActive) {
+      return;
+    }
+    const hovered = document.elementFromPoint(event.clientX, event.clientY);
+    const target = hovered ? hovered.closest(".deck-card") : null;
+    if (target) {
+      dragTargetId = target.dataset.inventoryId;
+    }
+  };
+  ui.deckCards.onpointerup = () => {
+    if (!dragActive) {
+      return;
+    }
+    finalizeDrag();
+    endDrag();
+  };
+
   sortItems(visibleDeckItems, ui.deckSort.value).forEach(({ item, card }) => {
     const remove = document.createElement("button");
     remove.className = "secondary";
@@ -1416,6 +1699,8 @@ const renderDecks = () => {
         className: "deck-card",
         actions,
         foil: item.foil,
+        draggable: true,
+        dataId: item.id,
         onClick: () => openCardModal(card, { foil: item.foil }),
       }),
     );
@@ -1478,6 +1763,25 @@ const createDeck = () => {
   ui.deckStatus.textContent = `Deck ${name} criado.`;
 };
 
+const renameDeck = (deckId) => {
+  const ownerKey = getOwnerKey();
+  if (!ownerKey) {
+    return;
+  }
+  const decks = state.decks[ownerKey] || [];
+  const deck = decks.find((entry) => entry.id === deckId);
+  if (!deck) {
+    return;
+  }
+  const nextName = window.prompt("Novo nome do deck:", deck.name);
+  if (!nextName || !nextName.trim()) {
+    return;
+  }
+  deck.name = nextName.trim();
+  saveState();
+  renderDecks();
+};
+
 const refreshForCharacter = () => {
   const ownerKey = getOwnerKey();
   const decks = ownerKey ? state.decks[ownerKey] || [] : [];
@@ -1493,7 +1797,8 @@ const clearFilters = () => {
   ui.filterType.value = "";
   ui.filterRarity.value = "";
   ui.filterClass.value = "";
-  ui.sortInventory.value = "recent";
+  ui.filterText.value = "";
+  ui.sortInventory.value = "manual";
   renderInventory();
 };
 
@@ -1501,7 +1806,8 @@ const clearDeckFilters = () => {
   ui.deckFilterType.value = "";
   ui.deckFilterRarity.value = "";
   ui.deckFilterClass.value = "";
-  ui.deckSort.value = "recent";
+  ui.deckFilterText.value = "";
+  ui.deckSort.value = "manual";
   renderDecks();
 };
 
@@ -1513,6 +1819,112 @@ const openOverlay = (overlay) => {
 const closeOverlay = (overlay) => {
   overlay.classList.add("hidden");
   overlay.hidden = true;
+};
+
+const openAdminOverlay = () => {
+  if (!state.currentUser) {
+    setStatus("Faça login para acessar o admin.");
+    return;
+  }
+  ui.adminLoginStatus.textContent = "";
+  ui.adminPasswordInput.value = "";
+  ui.adminLogin.classList.remove("hidden");
+  ui.adminPanel.classList.add("hidden");
+  openOverlay(ui.adminOverlay);
+};
+
+const renderDecksView = () => {
+  ui.decksViewBody.innerHTML = "";
+  if (!state.currentUser) {
+    ui.decksViewBody.textContent = "Faça login para visualizar os decks por personagem.";
+    return;
+  }
+  const characters = state.characters[state.currentUser] || [];
+  if (!characters.length) {
+    ui.decksViewBody.textContent = "Nenhum personagem criado ainda.";
+    return;
+  }
+
+  characters.forEach((character) => {
+    const container = document.createElement("div");
+    container.className = "decks-view-card";
+    const title = document.createElement("h3");
+    title.textContent = character.name;
+    const decks = state.decks[character.id] || [];
+    if (!decks.length) {
+      const empty = document.createElement("p");
+      empty.className = "status";
+      empty.textContent = "Nenhum deck criado para este personagem.";
+      container.append(title, empty);
+      ui.decksViewBody.appendChild(container);
+      return;
+    }
+    const list = document.createElement("div");
+    list.className = "decks-view-list";
+    decks.forEach((deck) => {
+      const deckRow = document.createElement("div");
+      deckRow.className = "decks-view-deck";
+      const deckTitle = document.createElement("p");
+      deckTitle.className = "decks-view-deck__title";
+      deckTitle.textContent = `${deck.name} (${deck.cardIds.length})`;
+      deckTitle.addEventListener("click", () => openDeckDetail(character, deck));
+      const cardsList = document.createElement("div");
+      cardsList.className = "decks-view-deck__cards";
+      if (!deck.cardIds.length) {
+        const empty = document.createElement("span");
+        empty.className = "status";
+        empty.textContent = "Sem cartas no deck.";
+        cardsList.appendChild(empty);
+      } else {
+        deck.cardIds.forEach((inventoryId) => {
+          const item = (state.inventory[character.id] || []).find((entry) => entry.id === inventoryId);
+          const card = item ? state.cards.find((entry) => entry.id === item.cardId) : null;
+          const chip = document.createElement("span");
+          chip.className = "badge";
+          chip.textContent = card ? formatCardTitle(card) : "Carta removida";
+          cardsList.appendChild(chip);
+        });
+      }
+      deckRow.append(deckTitle, cardsList);
+      list.appendChild(deckRow);
+    });
+    container.append(title, list);
+    ui.decksViewBody.appendChild(container);
+  });
+};
+
+const openDeckDetail = (character, deck) => {
+  ui.deckDetailBody.innerHTML = "";
+  ui.deckDetailOwner.textContent = character.name;
+  ui.deckDetailTitle.textContent = deck.name;
+  if (!deck.cardIds.length) {
+    const empty = document.createElement("p");
+    empty.className = "status";
+    empty.textContent = "Sem cartas neste deck.";
+    ui.deckDetailBody.appendChild(empty);
+    openOverlay(ui.deckDetailOverlay);
+    return;
+  }
+  const cards = deck.cardIds
+    .map((inventoryId) => {
+      const item = (state.inventory[character.id] || []).find((entry) => entry.id === inventoryId);
+      if (!item) {
+        return null;
+      }
+      const card = state.cards.find((entry) => entry.id === item.cardId);
+      return card ? { card, item } : null;
+    })
+    .filter(Boolean);
+  cards.forEach(({ card, item }) => {
+    ui.deckDetailBody.appendChild(
+      buildCardElement(card, {
+        className: "inventory-card",
+        foil: item.foil,
+        onClick: () => openCardModal(card, { foil: item.foil }),
+      }),
+    );
+  });
+  openOverlay(ui.deckDetailOverlay);
 };
 
 const openCardModal = (card, options = {}) => {
@@ -1564,17 +1976,7 @@ ui.createCharacter.addEventListener("click", createCharacter);
 ui.addFunds.addEventListener("click", updateBalance);
 ui.openStore.addEventListener("click", () => openOverlay(ui.storeOverlay));
 ui.closeStore.addEventListener("click", () => closeOverlay(ui.storeOverlay));
-ui.openAdmin.addEventListener("click", () => {
-  if (!state.currentUser) {
-    setStatus("Faça login para acessar o admin.");
-    return;
-  }
-  ui.adminLoginStatus.textContent = "";
-  ui.adminPasswordInput.value = "";
-  ui.adminLogin.classList.remove("hidden");
-  ui.adminPanel.classList.add("hidden");
-  openOverlay(ui.adminOverlay);
-});
+ui.openAdmin.addEventListener("click", openAdminOverlay);
 ui.closeAdmin.addEventListener("click", () => closeOverlay(ui.adminOverlay));
 ui.adminLoginButton.addEventListener("click", handleAdminLogin);
 ui.closeCardModal.addEventListener("click", () => closeOverlay(ui.cardModal));
@@ -1595,12 +1997,35 @@ ui.createDeck.addEventListener("click", createDeck);
 ui.filterType.addEventListener("change", renderInventory);
 ui.filterRarity.addEventListener("change", renderInventory);
 ui.filterClass.addEventListener("change", renderInventory);
+ui.filterText.addEventListener("input", renderInventory);
 ui.clearFilters.addEventListener("click", clearFilters);
 ui.sortInventory.addEventListener("change", renderInventory);
 ui.deckFilterType.addEventListener("change", renderDecks);
 ui.deckFilterRarity.addEventListener("change", renderDecks);
 ui.deckFilterClass.addEventListener("change", renderDecks);
+ui.deckFilterText.addEventListener("input", renderDecks);
 ui.deckSort.addEventListener("change", renderDecks);
 ui.deckClearFilters.addEventListener("click", clearDeckFilters);
+ui.openSidebar.addEventListener("click", () => {
+  document.body.classList.toggle("rail-open");
+});
+ui.sidebarOpenStore.addEventListener("click", () => openOverlay(ui.storeOverlay));
+ui.sidebarOpenAdmin.addEventListener("click", openAdminOverlay);
+ui.openDecksView.addEventListener("click", () => {
+  renderDecksView();
+  openOverlay(ui.decksViewOverlay);
+});
+ui.closeDecksView.addEventListener("click", () => closeOverlay(ui.decksViewOverlay));
+ui.decksViewOverlay.addEventListener("click", (event) => {
+  if (event.target === ui.decksViewOverlay) {
+    closeOverlay(ui.decksViewOverlay);
+  }
+});
+ui.closeDeckDetail.addEventListener("click", () => closeOverlay(ui.deckDetailOverlay));
+ui.deckDetailOverlay.addEventListener("click", (event) => {
+  if (event.target === ui.deckDetailOverlay) {
+    closeOverlay(ui.deckDetailOverlay);
+  }
+});
 
 init();
