@@ -79,7 +79,6 @@ const ui = {
   closePackModal: document.getElementById("close-pack-modal"),
   packRollResult: document.getElementById("pack-roll-result"),
   packRollStatus: document.getElementById("pack-roll-status"),
-  packRollRarities: document.getElementById("pack-roll-rarities"),
   packResultCards: document.getElementById("pack-result-cards"),
 };
 
@@ -882,9 +881,6 @@ const getDeckFilters = () => ({
 
 const sortItems = (items, sortKey) => {
   const sort = sortKey || "recent";
-  if (sort === "manual") {
-    return [...items];
-  }
   if (sort === "az" || sort === "za") {
     return [...items].sort((a, b) => {
       const nameA = a.card.name.toLowerCase();
@@ -1004,12 +1000,6 @@ const buildCardElement = (card, options = {}) => {
       }
       options.onClick();
     });
-  }
-  if (options.draggable) {
-    container.setAttribute("draggable", "true");
-  }
-  if (options.dataId) {
-    container.dataset.inventoryId = options.dataId;
   }
   return container;
 };
@@ -1198,7 +1188,6 @@ const openPack = async (packId) => {
   ui.packResultCards.innerHTML = "";
   ui.packRollResult.textContent = "-";
   ui.packRollStatus.textContent = "";
-  ui.packRollRarities.innerHTML = "";
   openOverlay(ui.packModal);
   const pulls = [];
   let resultInfo = "";
@@ -1210,13 +1199,6 @@ const openPack = async (packId) => {
     foilApplied = rollResult.foil;
     ui.packRollResult.textContent = rollResult.roll;
     ui.packRollStatus.textContent = `Resultado do dado${foilApplied ? " • Foil!" : ""}`;
-    ui.packRollRarities.innerHTML = "";
-    rollResult.rarities.forEach((rarity) => {
-      const chip = document.createElement("span");
-      chip.className = "chip";
-      chip.textContent = rarity;
-      ui.packRollRarities.appendChild(chip);
-    });
     rollResult.rarities.forEach((rarity) => {
       const card = pickCardByRarity(rarity);
       pulls.push(card);
@@ -1239,13 +1221,6 @@ const openPack = async (packId) => {
         foil: false,
       });
     }
-    ui.packRollRarities.innerHTML = "";
-    pulls.forEach((card) => {
-      const chip = document.createElement("span");
-      chip.className = "chip";
-      chip.textContent = card.rarity;
-      ui.packRollRarities.appendChild(chip);
-    });
   }
   saveState();
   updateWallet();
@@ -1365,7 +1340,6 @@ const getSelectedDeck = () => {
 const renderDecks = () => {
   ui.deckList.innerHTML = "";
   ui.deckCards.innerHTML = "";
-  ui.deckCards.onDragOver = null;
   const ownerKey = getOwnerKey();
   if (!ownerKey) {
     ui.deckTitle.textContent = "Selecione um personagem";
@@ -1429,43 +1403,6 @@ const renderDecks = () => {
     return;
   }
 
-  let draggedId = null;
-  ui.deckCards.ondragstart = (event) => {
-    const target = event.target.closest(".deck-card");
-    if (!target) {
-      return;
-    }
-    draggedId = target.dataset.inventoryId;
-    event.dataTransfer.effectAllowed = "move";
-  };
-  ui.deckCards.ondragover = (event) => {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = "move";
-  };
-  ui.deckCards.ondrop = (event) => {
-    event.preventDefault();
-    const targetCard = event.target.closest(".deck-card");
-    if (!targetCard || !draggedId || !selectedDeck) {
-      return;
-    }
-    const targetId = targetCard.dataset.inventoryId;
-    if (!targetId || targetId === draggedId) {
-      return;
-    }
-    const ids = [...selectedDeck.cardIds];
-    const fromIndex = ids.indexOf(draggedId);
-    const toIndex = ids.indexOf(targetId);
-    if (fromIndex === -1 || toIndex === -1) {
-      return;
-    }
-    ids.splice(fromIndex, 1);
-    ids.splice(toIndex, 0, draggedId);
-    selectedDeck.cardIds = ids;
-    ui.deckSort.value = "manual";
-    saveState();
-    renderDecks();
-  };
-
   sortItems(visibleDeckItems, ui.deckSort.value).forEach(({ item, card }) => {
     const remove = document.createElement("button");
     remove.className = "secondary";
@@ -1479,8 +1416,6 @@ const renderDecks = () => {
         className: "deck-card",
         actions,
         foil: item.foil,
-        draggable: true,
-        dataId: item.id,
         onClick: () => openCardModal(card, { foil: item.foil }),
       }),
     );
@@ -1566,7 +1501,7 @@ const clearDeckFilters = () => {
   ui.deckFilterType.value = "";
   ui.deckFilterRarity.value = "";
   ui.deckFilterClass.value = "";
-  ui.deckSort.value = "manual";
+  ui.deckSort.value = "recent";
   renderDecks();
 };
 
