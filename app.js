@@ -960,11 +960,8 @@ const renderCharacters = () => {
       saveState();
       refreshForCharacter();
     });
-    const rename = document.createElement("button");
-    rename.className = "secondary";
-    rename.textContent = "Renomear";
-    rename.addEventListener("click", () => renameCharacter(character.id));
-    item.append(button, rename);
+    button.addEventListener("dblclick", () => renameCharacter(character.id));
+    item.append(button);
     ui.characterList.appendChild(item);
   });
 };
@@ -1257,6 +1254,25 @@ const createCharacter = () => {
   refreshForCharacter();
 };
 
+const renameCharacter = (characterId) => {
+  if (!state.currentUser) {
+    return;
+  }
+  const characters = state.characters[state.currentUser] || [];
+  const character = characters.find((entry) => entry.id === characterId);
+  if (!character) {
+    return;
+  }
+  const nextName = window.prompt("Novo nome do personagem:", character.name);
+  if (!nextName || !nextName.trim()) {
+    return;
+  }
+  character.name = nextName.trim();
+  saveState();
+  renderCharacters();
+  updateSidebarSummary();
+};
+
 const updateBalance = () => {
   const ownerKey = getOwnerKey();
   if (!ownerKey) {
@@ -1519,11 +1535,8 @@ const renderDecks = () => {
       saveState();
       renderDecks();
     });
-    const rename = document.createElement("button");
-    rename.className = "secondary";
-    rename.textContent = "Renomear";
-    rename.addEventListener("click", () => renameDeck(deck.id));
-    item.append(button, rename);
+    button.addEventListener("dblclick", () => renameDeck(deck.id));
+    item.append(button);
     ui.deckList.appendChild(item);
   });
 
@@ -1725,6 +1738,25 @@ const createDeck = () => {
   renderDecks();
   renderInventory();
   ui.deckStatus.textContent = `Deck ${name} criado.`;
+};
+
+const renameDeck = (deckId) => {
+  const ownerKey = getOwnerKey();
+  if (!ownerKey) {
+    return;
+  }
+  const decks = state.decks[ownerKey] || [];
+  const deck = decks.find((entry) => entry.id === deckId);
+  if (!deck) {
+    return;
+  }
+  const nextName = window.prompt("Novo nome do deck:", deck.name);
+  if (!nextName || !nextName.trim()) {
+    return;
+  }
+  deck.name = nextName.trim();
+  saveState();
+  renderDecks();
 };
 
 const refreshForCharacter = () => {

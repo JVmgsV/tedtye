@@ -21,7 +21,8 @@ body {
 }
 
 .page-content {
-  margin-left: 260px;
+  margin-left: 0;
+  transition: margin-left 0.2s ease;
 }
 
 .top-bar {
@@ -524,6 +525,17 @@ button.secondary {
   flex-direction: column;
   gap: 16px;
   border-right: 1px solid rgba(255, 255, 255, 0.08);
+  transform: translateX(-100%);
+  transition: transform 0.2s ease;
+  z-index: 20;
+}
+
+body.rail-open .side-rail {
+  transform: translateX(0);
+}
+
+body.rail-open .page-content {
+  margin-left: 260px;
 }
 
 .side-rail__brand {
@@ -789,9 +801,6 @@ button.secondary {
   }
 
   .side-rail {
-    transform: translateX(-100%);
-    transition: transform 0.2s ease;
-    z-index: 20;
     width: 240px;
   }
 
