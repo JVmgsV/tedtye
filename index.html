@@ -3,16 +3,17 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Beta de Cartas</title>
+    <title>Ted Tye Decks</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <header class="top-bar">
+      <button id="open-sidebar" class="menu-button" aria-label="Abrir menu">☰</button>
       <button id="top-center-action" class="top-center-button">Ação especial</button>
       <div class="top-bar__left">
         <div class="brand">
-          <h1>Beta de Cartas</h1>
-          <p>Construa personagens, compre packs na loja e monte seus decks.</p>
+          <h1>Ted Tye Decks</h1>
+          <p>Construa personagens, gerencie o inventário e monte seus decks.</p>
         </div>
         <div class="login-area">
           <label class="field">
@@ -127,6 +128,50 @@
           </div>
         </section>
     </main>
+
+    <section class="overlay sidebar-overlay hidden" id="sidebar-overlay" hidden>
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <div>
+            <p class="sidebar-eyebrow">Atalhos rápidos</p>
+            <h2>Central Ted Tye</h2>
+          </div>
+          <button class="secondary" id="close-sidebar">Fechar</button>
+        </div>
+        <div class="sidebar-profile">
+          <div>
+            <p class="label">Usuário</p>
+            <p id="sidebar-user" class="value">Nenhum usuário</p>
+          </div>
+          <div>
+            <p class="label">Personagem ativo</p>
+            <p id="sidebar-character" class="value">Selecione um personagem</p>
+          </div>
+          <div>
+            <p class="label">Saldo</p>
+            <p id="sidebar-balance" class="value">0 moedas</p>
+          </div>
+        </div>
+        <div class="sidebar-actions">
+          <button id="sidebar-open-store">Abrir loja</button>
+          <button id="open-decks-view">Ver decks completos</button>
+          <button id="sidebar-open-admin" class="secondary">Área admin</button>
+        </div>
+        <div class="sidebar-help">
+          <p>Use o menu para acessar os principais módulos do protótipo.</p>
+        </div>
+      </aside>
+    </section>
+
+    <section class="overlay hidden" id="decks-view-overlay" hidden>
+      <div class="overlay-content decks-view-content">
+        <div class="overlay-header">
+          <h2>Decks por personagem</h2>
+          <button class="secondary" id="close-decks-view">Fechar</button>
+        </div>
+        <div id="decks-view-body" class="decks-view-body"></div>
+      </div>
+    </section>
 
     <section class="overlay hidden" id="store-overlay" hidden>
       <div class="overlay-content">

@@ -83,6 +83,18 @@ const ui = {
   packRollStatus: document.getElementById("pack-roll-status"),
   packRollRarities: document.getElementById("pack-roll-rarities"),
   packResultCards: document.getElementById("pack-result-cards"),
+  openSidebar: document.getElementById("open-sidebar"),
+  sidebarOverlay: document.getElementById("sidebar-overlay"),
+  closeSidebar: document.getElementById("close-sidebar"),
+  openDecksView: document.getElementById("open-decks-view"),
+  decksViewOverlay: document.getElementById("decks-view-overlay"),
+  closeDecksView: document.getElementById("close-decks-view"),
+  decksViewBody: document.getElementById("decks-view-body"),
+  sidebarUser: document.getElementById("sidebar-user"),
+  sidebarCharacter: document.getElementById("sidebar-character"),
+  sidebarBalance: document.getElementById("sidebar-balance"),
+  sidebarOpenStore: document.getElementById("sidebar-open-store"),
+  sidebarOpenAdmin: document.getElementById("sidebar-open-admin"),
 };
 
 const defaultCards = [
@@ -813,13 +825,23 @@ const getOwnerKey = () => {
   return character ? character.id : null;
 };
 
-const updateWallet = () => {
-  const ownerKey = getOwnerKey();
-  if (!ownerKey) {
-    ui.walletBalance.textContent = "Saldo: 0";
+const updateSidebarSummary = () => {
+  if (!ui.sidebarUser) {
     return;
   }
-  ui.walletBalance.textContent = `Saldo: ${state.balances[ownerKey] || 0}`;
+  ui.sidebarUser.textContent = state.currentUser || "Nenhum usuário";
+  const character = getSelectedCharacter();
+  ui.sidebarCharacter.textContent = character ? character.name : "Selecione um personagem";
+  const ownerKey = getOwnerKey();
+  const balance = ownerKey ? state.balances[ownerKey] || 0 : 0;
+  ui.sidebarBalance.textContent = `${balance} moedas`;
+};
+
+const updateWallet = () => {
+  const ownerKey = getOwnerKey();
+  const balance = ownerKey ? state.balances[ownerKey] || 0 : 0;
+  ui.walletBalance.textContent = `Saldo: ${balance}`;
+  updateSidebarSummary();
 };
 
 const buildFilterOptions = () => {
@@ -929,6 +951,7 @@ const renderCharacters = () => {
   }
   characters.forEach((character) => {
     const item = document.createElement("li");
+    item.className = "list-item";
     const button = document.createElement("button");
     button.textContent = character.name;
     button.classList.toggle("active", character.id === state.selectedCharacter);
@@ -938,7 +961,11 @@ const renderCharacters = () => {
       saveState();
       refreshForCharacter();
     });
-    item.appendChild(button);
+    const rename = document.createElement("button");
+    rename.className = "secondary";
+    rename.textContent = "Renomear";
+    rename.addEventListener("click", () => renameCharacter(character.id));
+    item.append(button, rename);
     ui.characterList.appendChild(item);
   });
 };
@@ -1484,6 +1511,7 @@ const renderDecks = () => {
 
   decks.forEach((deck) => {
     const item = document.createElement("li");
+    item.className = "list-item";
     const button = document.createElement("button");
     button.textContent = `${deck.name} (${deck.cardIds.length})`;
     button.classList.toggle("active", deck.id === state.selectedDeck);
@@ -1492,7 +1520,11 @@ const renderDecks = () => {
       saveState();
       renderDecks();
     });
-    item.appendChild(button);
+    const rename = document.createElement("button");
+    rename.className = "secondary";
+    rename.textContent = "Renomear";
+    rename.addEventListener("click", () => renameDeck(deck.id));
+    item.append(button, rename);
     ui.deckList.appendChild(item);
   });
 
@@ -1735,6 +1767,56 @@ const closeOverlay = (overlay) => {
   overlay.hidden = true;
 };
 
+const openAdminOverlay = () => {
+  if (!state.currentUser) {
+    setStatus("Faça login para acessar o admin.");
+    return;
+  }
+  ui.adminLoginStatus.textContent = "";
+  ui.adminPasswordInput.value = "";
+  ui.adminLogin.classList.remove("hidden");
+  ui.adminPanel.classList.add("hidden");
+  openOverlay(ui.adminOverlay);
+};
+
+const renderDecksView = () => {
+  ui.decksViewBody.innerHTML = "";
+  if (!state.currentUser) {
+    ui.decksViewBody.textContent = "Faça login para visualizar os decks por personagem.";
+    return;
+  }
+  const characters = state.characters[state.currentUser] || [];
+  if (!characters.length) {
+    ui.decksViewBody.textContent = "Nenhum personagem criado ainda.";
+    return;
+  }
+
+  characters.forEach((character) => {
+    const container = document.createElement("div");
+    container.className = "decks-view-card";
+    const title = document.createElement("h3");
+    title.textContent = character.name;
+    const decks = state.decks[character.id] || [];
+    if (!decks.length) {
+      const empty = document.createElement("p");
+      empty.className = "status";
+      empty.textContent = "Nenhum deck criado para este personagem.";
+      container.append(title, empty);
+      ui.decksViewBody.appendChild(container);
+      return;
+    }
+    const list = document.createElement("ul");
+    decks.forEach((deck) => {
+      const item = document.createElement("li");
+      item.className = "badge";
+      item.textContent = `${deck.name} (${deck.cardIds.length})`;
+      list.appendChild(item);
+    });
+    container.append(title, list);
+    ui.decksViewBody.appendChild(container);
+  });
+};
+
 const openCardModal = (card, options = {}) => {
   ui.cardModalBody.innerHTML = "";
   ui.cardModalBody.appendChild(
@@ -1784,17 +1866,7 @@ ui.createCharacter.addEventListener("click", createCharacter);
 ui.addFunds.addEventListener("click", updateBalance);
 ui.openStore.addEventListener("click", () => openOverlay(ui.storeOverlay));
 ui.closeStore.addEventListener("click", () => closeOverlay(ui.storeOverlay));
-ui.openAdmin.addEventListener("click", () => {
-  if (!state.currentUser) {
-    setStatus("Faça login para acessar o admin.");
-    return;
-  }
-  ui.adminLoginStatus.textContent = "";
-  ui.adminPasswordInput.value = "";
-  ui.adminLogin.classList.remove("hidden");
-  ui.adminPanel.classList.add("hidden");
-  openOverlay(ui.adminOverlay);
-});
+ui.openAdmin.addEventListener("click", openAdminOverlay);
 ui.closeAdmin.addEventListener("click", () => closeOverlay(ui.adminOverlay));
 ui.adminLoginButton.addEventListener("click", handleAdminLogin);
 ui.closeCardModal.addEventListener("click", () => closeOverlay(ui.cardModal));
@@ -1824,5 +1896,24 @@ ui.deckFilterClass.addEventListener("change", renderDecks);
 ui.deckFilterText.addEventListener("input", renderDecks);
 ui.deckSort.addEventListener("change", renderDecks);
 ui.deckClearFilters.addEventListener("click", clearDeckFilters);
+ui.openSidebar.addEventListener("click", () => openOverlay(ui.sidebarOverlay));
+ui.closeSidebar.addEventListener("click", () => closeOverlay(ui.sidebarOverlay));
+ui.sidebarOverlay.addEventListener("click", (event) => {
+  if (event.target === ui.sidebarOverlay) {
+    closeOverlay(ui.sidebarOverlay);
+  }
+});
+ui.sidebarOpenStore.addEventListener("click", () => openOverlay(ui.storeOverlay));
+ui.sidebarOpenAdmin.addEventListener("click", openAdminOverlay);
+ui.openDecksView.addEventListener("click", () => {
+  renderDecksView();
+  openOverlay(ui.decksViewOverlay);
+});
+ui.closeDecksView.addEventListener("click", () => closeOverlay(ui.decksViewOverlay));
+ui.decksViewOverlay.addEventListener("click", (event) => {
+  if (event.target === ui.decksViewOverlay) {
+    closeOverlay(ui.decksViewOverlay);
+  }
+});
 
 init();

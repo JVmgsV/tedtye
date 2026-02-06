@@ -32,6 +32,20 @@ body {
   flex-wrap: wrap;
 }
 
+.menu-button {
+  position: absolute;
+  left: 16px;
+  top: 16px;
+  background: #f1f1ff;
+  border: none;
+  color: var(--accent-dark);
+  font-size: 18px;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
 .top-center-button {
   position: absolute;
   left: 50%;
@@ -491,6 +505,110 @@ button.secondary {
   display: grid;
   grid-template-columns: minmax(200px, 240px) 1fr;
   gap: 20px;
+}
+
+.sidebar-overlay {
+  justify-content: flex-start;
+}
+
+.sidebar {
+  width: 280px;
+  height: 100%;
+  background: #fff;
+  border-right: 1px solid var(--border);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sidebar-eyebrow {
+  margin: 0 0 6px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.sidebar-header h2 {
+  margin: 0;
+}
+
+.sidebar-profile {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #f8f8ff;
+  border: 1px solid var(--border);
+}
+
+.sidebar-profile .label {
+  margin: 0;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.sidebar-profile .value {
+  margin: 4px 0 0;
+  font-weight: 600;
+}
+
+.sidebar-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sidebar-help {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.sidebar-help p {
+  margin: 0;
+}
+
+.decks-view-content {
+  width: min(1200px, 95vw);
+}
+
+.decks-view-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.decks-view-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  background: #fbfbff;
+}
+
+.decks-view-card h3 {
+  margin: 0 0 8px;
+}
+
+.decks-view-card ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .deck-card.dragging,
