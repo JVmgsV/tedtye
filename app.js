@@ -89,6 +89,11 @@ const ui = {
   decksViewOverlay: document.getElementById("decks-view-overlay"),
   closeDecksView: document.getElementById("close-decks-view"),
   decksViewBody: document.getElementById("decks-view-body"),
+  deckDetailOverlay: document.getElementById("deck-detail-overlay"),
+  closeDeckDetail: document.getElementById("close-deck-detail"),
+  deckDetailTitle: document.getElementById("deck-detail-title"),
+  deckDetailOwner: document.getElementById("deck-detail-owner"),
+  deckDetailBody: document.getElementById("deck-detail-body"),
   sidebarUser: document.getElementById("sidebar-user"),
   sidebarCharacter: document.getElementById("sidebar-character"),
   sidebarBalance: document.getElementById("sidebar-balance"),
@@ -959,9 +964,18 @@ const renderCharacters = () => {
       state.selectedDeck = null;
       saveState();
       refreshForCharacter();
+      ui.characterList.querySelectorAll(".list-item").forEach((entry) => {
+        entry.classList.remove("active");
+      });
+      item.classList.add("active");
     });
-    button.addEventListener("dblclick", () => renameCharacter(character.id));
+    const renameAction = document.createElement("button");
+    renameAction.className = "rename-action";
+    renameAction.type = "button";
+    renameAction.textContent = "Renomear";
+    renameAction.addEventListener("click", () => renameCharacter(character.id));
     item.append(button);
+    item.append(renameAction);
     ui.characterList.appendChild(item);
   });
 };
@@ -1534,9 +1548,18 @@ const renderDecks = () => {
       state.selectedDeck = deck.id;
       saveState();
       renderDecks();
+      ui.deckList.querySelectorAll(".list-item").forEach((entry) => {
+        entry.classList.remove("active");
+      });
+      item.classList.add("active");
     });
-    button.addEventListener("dblclick", () => renameDeck(deck.id));
+    const renameAction = document.createElement("button");
+    renameAction.className = "rename-action";
+    renameAction.type = "button";
+    renameAction.textContent = "Renomear";
+    renameAction.addEventListener("click", () => renameDeck(deck.id));
     item.append(button);
+    item.append(renameAction);
     ui.deckList.appendChild(item);
   });
 
@@ -1844,6 +1867,7 @@ const renderDecksView = () => {
       const deckTitle = document.createElement("p");
       deckTitle.className = "decks-view-deck__title";
       deckTitle.textContent = `${deck.name} (${deck.cardIds.length})`;
+      deckTitle.addEventListener("click", () => openDeckDetail(character, deck));
       const cardsList = document.createElement("div");
       cardsList.className = "decks-view-deck__cards";
       if (!deck.cardIds.length) {
@@ -1867,6 +1891,40 @@ const renderDecksView = () => {
     container.append(title, list);
     ui.decksViewBody.appendChild(container);
   });
+};
+
+const openDeckDetail = (character, deck) => {
+  ui.deckDetailBody.innerHTML = "";
+  ui.deckDetailOwner.textContent = character.name;
+  ui.deckDetailTitle.textContent = deck.name;
+  if (!deck.cardIds.length) {
+    const empty = document.createElement("p");
+    empty.className = "status";
+    empty.textContent = "Sem cartas neste deck.";
+    ui.deckDetailBody.appendChild(empty);
+    openOverlay(ui.deckDetailOverlay);
+    return;
+  }
+  const cards = deck.cardIds
+    .map((inventoryId) => {
+      const item = (state.inventory[character.id] || []).find((entry) => entry.id === inventoryId);
+      if (!item) {
+        return null;
+      }
+      const card = state.cards.find((entry) => entry.id === item.cardId);
+      return card ? { card, item } : null;
+    })
+    .filter(Boolean);
+  cards.forEach(({ card, item }) => {
+    ui.deckDetailBody.appendChild(
+      buildCardElement(card, {
+        className: "inventory-card",
+        foil: item.foil,
+        onClick: () => openCardModal(card, { foil: item.foil }),
+      }),
+    );
+  });
+  openOverlay(ui.deckDetailOverlay);
 };
 
 const openCardModal = (card, options = {}) => {
@@ -1961,6 +2019,12 @@ ui.closeDecksView.addEventListener("click", () => closeOverlay(ui.decksViewOverl
 ui.decksViewOverlay.addEventListener("click", (event) => {
   if (event.target === ui.decksViewOverlay) {
     closeOverlay(ui.decksViewOverlay);
+  }
+});
+ui.closeDeckDetail.addEventListener("click", () => closeOverlay(ui.deckDetailOverlay));
+ui.deckDetailOverlay.addEventListener("click", (event) => {
+  if (event.target === ui.deckDetailOverlay) {
+    closeOverlay(ui.deckDetailOverlay);
   }
 });
 

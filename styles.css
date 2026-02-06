@@ -512,6 +512,34 @@ button.secondary {
   gap: 20px;
 }
 
+.list-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.list-item .rename-action {
+  display: none;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px dashed var(--border);
+  background: #fff;
+  color: var(--accent-dark);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.list-item.active .rename-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.list-item .rename-action::before {
+  content: "✎";
+  font-size: 12px;
+}
+
 .side-rail {
   position: fixed;
   top: 0;
@@ -619,6 +647,14 @@ body.rail-open .page-content {
 
 .side-rail__hint p {
   margin: 0;
+}
+
+.deck-detail-content {
+  width: min(1200px, 95vw);
+}
+
+.deck-detail-content .grid {
+  margin-top: 12px;
 }
 
 .decks-view-content {
