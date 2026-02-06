@@ -493,7 +493,8 @@ button.secondary {
   gap: 20px;
 }
 
-.deck-card.dragging {
+.deck-card.dragging,
+.inventory-card.dragging {
   opacity: 0.7;
   transform: scale(0.98);
 }

@@ -1049,6 +1049,8 @@ const createInventoryCard = (card, inventoryId, options = {}) => {
     className: "inventory-card",
     actions,
     foil: options.foil,
+    draggable: true,
+    dataId: inventoryId,
     onClick: () => openCardModal(card, { foil: options.foil }),
   });
 };
@@ -1065,6 +1067,94 @@ const renderInventory = () => {
     ui.inventoryList.textContent = "Nenhuma carta ainda.";
     return;
   }
+  let draggedId = null;
+  let dragTargetId = null;
+  let dragActive = false;
+  const startDrag = (target) => {
+    draggedId = target.dataset.inventoryId;
+    dragTargetId = null;
+    dragActive = true;
+    target.classList.add("dragging");
+  };
+  const endDrag = () => {
+    dragActive = false;
+    ui.inventoryList.querySelectorAll(".inventory-card.dragging").forEach((card) => {
+      card.classList.remove("dragging");
+    });
+  };
+  const finalizeDrag = () => {
+    if (!draggedId || !dragTargetId || dragTargetId === draggedId) {
+      endDrag();
+      return;
+    }
+    const ids = [...items].map((item) => item.id);
+    const fromIndex = ids.indexOf(draggedId);
+    const toIndex = ids.indexOf(dragTargetId);
+    if (fromIndex === -1 || toIndex === -1) {
+      endDrag();
+      return;
+    }
+    ids.splice(fromIndex, 1);
+    ids.splice(toIndex, 0, draggedId);
+    state.inventory[ownerKey] = ids
+      .map((id) => items.find((entry) => entry.id === id))
+      .filter(Boolean);
+    ui.sortInventory.value = "manual";
+    saveState();
+    renderInventory();
+  };
+
+  ui.inventoryList.ondragstart = (event) => {
+    const target = event.target.closest(".inventory-card");
+    if (!target) {
+      return;
+    }
+    startDrag(target);
+    event.dataTransfer.effectAllowed = "move";
+  };
+  ui.inventoryList.ondragover = (event) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+    const target = event.target.closest(".inventory-card");
+    if (target) {
+      dragTargetId = target.dataset.inventoryId;
+    }
+  };
+  ui.inventoryList.ondrop = (event) => {
+    event.preventDefault();
+    const targetCard = event.target.closest(".inventory-card");
+    if (targetCard) {
+      dragTargetId = targetCard.dataset.inventoryId;
+    }
+    finalizeDrag();
+  };
+  ui.inventoryList.ondragend = () => {
+    endDrag();
+  };
+  ui.inventoryList.onpointerdown = (event) => {
+    const target = event.target.closest(".inventory-card");
+    if (!target) {
+      return;
+    }
+    startDrag(target);
+  };
+  ui.inventoryList.onpointermove = (event) => {
+    if (!dragActive) {
+      return;
+    }
+    const hovered = document.elementFromPoint(event.clientX, event.clientY);
+    const target = hovered ? hovered.closest(".inventory-card") : null;
+    if (target) {
+      dragTargetId = target.dataset.inventoryId;
+    }
+  };
+  ui.inventoryList.onpointerup = () => {
+    if (!dragActive) {
+      return;
+    }
+    finalizeDrag();
+    endDrag();
+  };
   const filters = getInventoryFilters();
   const visibleItems = items
     .map((item) => ({ item, card: state.cards.find((entry) => entry.id === item.cardId) }))
@@ -1622,7 +1712,7 @@ const clearFilters = () => {
   ui.filterRarity.value = "";
   ui.filterClass.value = "";
   ui.filterText.value = "";
-  ui.sortInventory.value = "recent";
+  ui.sortInventory.value = "manual";
   renderInventory();
 };
 
