@@ -35,13 +35,11 @@ const ui = {
   filterType: document.getElementById("filter-type"),
   filterRarity: document.getElementById("filter-rarity"),
   filterClass: document.getElementById("filter-class"),
-  filterText: document.getElementById("filter-text"),
   sortInventory: document.getElementById("sort-inventory"),
   clearFilters: document.getElementById("clear-filters"),
   deckFilterType: document.getElementById("deck-filter-type"),
   deckFilterRarity: document.getElementById("deck-filter-rarity"),
   deckFilterClass: document.getElementById("deck-filter-class"),
-  deckFilterText: document.getElementById("deck-filter-text"),
   deckSort: document.getElementById("deck-sort"),
   deckClearFilters: document.getElementById("deck-clear-filters"),
   characterName: document.getElementById("character-name"),
@@ -81,7 +79,6 @@ const ui = {
   closePackModal: document.getElementById("close-pack-modal"),
   packRollResult: document.getElementById("pack-roll-result"),
   packRollStatus: document.getElementById("pack-roll-status"),
-  packRollRarities: document.getElementById("pack-roll-rarities"),
   packResultCards: document.getElementById("pack-result-cards"),
 };
 
@@ -858,7 +855,6 @@ const passesFilters = (card, filters) => {
   const typeFilter = filters.type;
   const rarityFilter = filters.rarity;
   const classFilter = filters.class;
-  const textFilter = filters.text;
   if (typeFilter && card.type !== typeFilter) {
     return false;
   }
@@ -868,14 +864,6 @@ const passesFilters = (card, filters) => {
   if (classFilter && card.class !== classFilter) {
     return false;
   }
-  if (textFilter) {
-    const haystack = `${card.name} ${card.description} ${card.type} ${card.rarity} ${card.class}`
-      .toLowerCase()
-      .trim();
-    if (!haystack.includes(textFilter)) {
-      return false;
-    }
-  }
   return true;
 };
 
@@ -883,21 +871,16 @@ const getInventoryFilters = () => ({
   type: ui.filterType.value,
   rarity: ui.filterRarity.value,
   class: ui.filterClass.value,
-  text: ui.filterText.value.trim().toLowerCase(),
 });
 
 const getDeckFilters = () => ({
   type: ui.deckFilterType.value,
   rarity: ui.deckFilterRarity.value,
   class: ui.deckFilterClass.value,
-  text: ui.deckFilterText.value.trim().toLowerCase(),
 });
 
 const sortItems = (items, sortKey) => {
   const sort = sortKey || "recent";
-  if (sort === "manual") {
-    return [...items];
-  }
   if (sort === "az" || sort === "za") {
     return [...items].sort((a, b) => {
       const nameA = a.card.name.toLowerCase();
@@ -1017,12 +1000,6 @@ const buildCardElement = (card, options = {}) => {
       }
       options.onClick();
     });
-  }
-  if (options.draggable) {
-    container.setAttribute("draggable", "true");
-  }
-  if (options.dataId) {
-    container.dataset.inventoryId = options.dataId;
   }
   return container;
 };
@@ -1211,7 +1188,6 @@ const openPack = async (packId) => {
   ui.packResultCards.innerHTML = "";
   ui.packRollResult.textContent = "-";
   ui.packRollStatus.textContent = "";
-  ui.packRollRarities.innerHTML = "";
   openOverlay(ui.packModal);
   const pulls = [];
   let resultInfo = "";
@@ -1223,13 +1199,6 @@ const openPack = async (packId) => {
     foilApplied = rollResult.foil;
     ui.packRollResult.textContent = rollResult.roll;
     ui.packRollStatus.textContent = `Resultado do dado${foilApplied ? " • Foil!" : ""}`;
-    ui.packRollRarities.innerHTML = "";
-    rollResult.rarities.forEach((rarity) => {
-      const chip = document.createElement("span");
-      chip.className = "chip";
-      chip.textContent = rarity;
-      ui.packRollRarities.appendChild(chip);
-    });
     rollResult.rarities.forEach((rarity) => {
       const card = pickCardByRarity(rarity);
       pulls.push(card);
@@ -1252,13 +1221,6 @@ const openPack = async (packId) => {
         foil: false,
       });
     }
-    ui.packRollRarities.innerHTML = "";
-    pulls.forEach((card) => {
-      const chip = document.createElement("span");
-      chip.className = "chip";
-      chip.textContent = card.rarity;
-      ui.packRollRarities.appendChild(chip);
-    });
   }
   saveState();
   updateWallet();
@@ -1378,7 +1340,6 @@ const getSelectedDeck = () => {
 const renderDecks = () => {
   ui.deckList.innerHTML = "";
   ui.deckCards.innerHTML = "";
-  ui.deckCards.onDragOver = null;
   const ownerKey = getOwnerKey();
   if (!ownerKey) {
     ui.deckTitle.textContent = "Selecione um personagem";
@@ -1442,93 +1403,6 @@ const renderDecks = () => {
     return;
   }
 
-  let draggedId = null;
-  let dragTargetId = null;
-  let dragActive = false;
-  const startDrag = (target) => {
-    draggedId = target.dataset.inventoryId;
-    dragTargetId = null;
-    dragActive = true;
-    target.classList.add("dragging");
-  };
-  const endDrag = () => {
-    dragActive = false;
-    ui.deckCards.querySelectorAll(".deck-card.dragging").forEach((card) => {
-      card.classList.remove("dragging");
-    });
-  };
-  const finalizeDrag = () => {
-    if (!draggedId || !dragTargetId || dragTargetId === draggedId) {
-      endDrag();
-      return;
-    }
-    const ids = [...selectedDeck.cardIds];
-    const fromIndex = ids.indexOf(draggedId);
-    const toIndex = ids.indexOf(dragTargetId);
-    if (fromIndex === -1 || toIndex === -1) {
-      endDrag();
-      return;
-    }
-    ids.splice(fromIndex, 1);
-    ids.splice(toIndex, 0, draggedId);
-    selectedDeck.cardIds = ids;
-    ui.deckSort.value = "manual";
-    saveState();
-    renderDecks();
-  };
-
-  ui.deckCards.ondragstart = (event) => {
-    const target = event.target.closest(".deck-card");
-    if (!target) {
-      return;
-    }
-    startDrag(target);
-    event.dataTransfer.effectAllowed = "move";
-  };
-  ui.deckCards.ondragover = (event) => {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = "move";
-    const target = event.target.closest(".deck-card");
-    if (target) {
-      dragTargetId = target.dataset.inventoryId;
-    }
-  };
-  ui.deckCards.ondrop = (event) => {
-    event.preventDefault();
-    const targetCard = event.target.closest(".deck-card");
-    if (targetCard) {
-      dragTargetId = targetCard.dataset.inventoryId;
-    }
-    finalizeDrag();
-  };
-  ui.deckCards.ondragend = () => {
-    endDrag();
-  };
-  ui.deckCards.onpointerdown = (event) => {
-    const target = event.target.closest(".deck-card");
-    if (!target) {
-      return;
-    }
-    startDrag(target);
-  };
-  ui.deckCards.onpointermove = (event) => {
-    if (!dragActive) {
-      return;
-    }
-    const hovered = document.elementFromPoint(event.clientX, event.clientY);
-    const target = hovered ? hovered.closest(".deck-card") : null;
-    if (target) {
-      dragTargetId = target.dataset.inventoryId;
-    }
-  };
-  ui.deckCards.onpointerup = () => {
-    if (!dragActive) {
-      return;
-    }
-    finalizeDrag();
-    endDrag();
-  };
-
   sortItems(visibleDeckItems, ui.deckSort.value).forEach(({ item, card }) => {
     const remove = document.createElement("button");
     remove.className = "secondary";
@@ -1542,8 +1416,6 @@ const renderDecks = () => {
         className: "deck-card",
         actions,
         foil: item.foil,
-        draggable: true,
-        dataId: item.id,
         onClick: () => openCardModal(card, { foil: item.foil }),
       }),
     );
@@ -1621,7 +1493,6 @@ const clearFilters = () => {
   ui.filterType.value = "";
   ui.filterRarity.value = "";
   ui.filterClass.value = "";
-  ui.filterText.value = "";
   ui.sortInventory.value = "recent";
   renderInventory();
 };
@@ -1630,8 +1501,7 @@ const clearDeckFilters = () => {
   ui.deckFilterType.value = "";
   ui.deckFilterRarity.value = "";
   ui.deckFilterClass.value = "";
-  ui.deckFilterText.value = "";
-  ui.deckSort.value = "manual";
+  ui.deckSort.value = "recent";
   renderDecks();
 };
 
@@ -1725,13 +1595,11 @@ ui.createDeck.addEventListener("click", createDeck);
 ui.filterType.addEventListener("change", renderInventory);
 ui.filterRarity.addEventListener("change", renderInventory);
 ui.filterClass.addEventListener("change", renderInventory);
-ui.filterText.addEventListener("input", renderInventory);
 ui.clearFilters.addEventListener("click", clearFilters);
 ui.sortInventory.addEventListener("change", renderInventory);
 ui.deckFilterType.addEventListener("change", renderDecks);
 ui.deckFilterRarity.addEventListener("change", renderDecks);
 ui.deckFilterClass.addEventListener("change", renderDecks);
-ui.deckFilterText.addEventListener("input", renderDecks);
 ui.deckSort.addEventListener("change", renderDecks);
 ui.deckClearFilters.addEventListener("click", clearDeckFilters);
 
