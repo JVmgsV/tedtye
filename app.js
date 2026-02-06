@@ -84,8 +84,7 @@ const ui = {
   packRollRarities: document.getElementById("pack-roll-rarities"),
   packResultCards: document.getElementById("pack-result-cards"),
   openSidebar: document.getElementById("open-sidebar"),
-  sidebarOverlay: document.getElementById("sidebar-overlay"),
-  closeSidebar: document.getElementById("close-sidebar"),
+  sideRail: document.getElementById("side-rail"),
   openDecksView: document.getElementById("open-decks-view"),
   decksViewOverlay: document.getElementById("decks-view-overlay"),
   closeDecksView: document.getElementById("close-decks-view"),
@@ -1805,12 +1804,33 @@ const renderDecksView = () => {
       ui.decksViewBody.appendChild(container);
       return;
     }
-    const list = document.createElement("ul");
+    const list = document.createElement("div");
+    list.className = "decks-view-list";
     decks.forEach((deck) => {
-      const item = document.createElement("li");
-      item.className = "badge";
-      item.textContent = `${deck.name} (${deck.cardIds.length})`;
-      list.appendChild(item);
+      const deckRow = document.createElement("div");
+      deckRow.className = "decks-view-deck";
+      const deckTitle = document.createElement("p");
+      deckTitle.className = "decks-view-deck__title";
+      deckTitle.textContent = `${deck.name} (${deck.cardIds.length})`;
+      const cardsList = document.createElement("div");
+      cardsList.className = "decks-view-deck__cards";
+      if (!deck.cardIds.length) {
+        const empty = document.createElement("span");
+        empty.className = "status";
+        empty.textContent = "Sem cartas no deck.";
+        cardsList.appendChild(empty);
+      } else {
+        deck.cardIds.forEach((inventoryId) => {
+          const item = (state.inventory[character.id] || []).find((entry) => entry.id === inventoryId);
+          const card = item ? state.cards.find((entry) => entry.id === item.cardId) : null;
+          const chip = document.createElement("span");
+          chip.className = "badge";
+          chip.textContent = card ? formatCardTitle(card) : "Carta removida";
+          cardsList.appendChild(chip);
+        });
+      }
+      deckRow.append(deckTitle, cardsList);
+      list.appendChild(deckRow);
     });
     container.append(title, list);
     ui.decksViewBody.appendChild(container);
@@ -1896,12 +1916,8 @@ ui.deckFilterClass.addEventListener("change", renderDecks);
 ui.deckFilterText.addEventListener("input", renderDecks);
 ui.deckSort.addEventListener("change", renderDecks);
 ui.deckClearFilters.addEventListener("click", clearDeckFilters);
-ui.openSidebar.addEventListener("click", () => openOverlay(ui.sidebarOverlay));
-ui.closeSidebar.addEventListener("click", () => closeOverlay(ui.sidebarOverlay));
-ui.sidebarOverlay.addEventListener("click", (event) => {
-  if (event.target === ui.sidebarOverlay) {
-    closeOverlay(ui.sidebarOverlay);
-  }
+ui.openSidebar.addEventListener("click", () => {
+  document.body.classList.toggle("rail-open");
 });
 ui.sidebarOpenStore.addEventListener("click", () => openOverlay(ui.storeOverlay));
 ui.sidebarOpenAdmin.addEventListener("click", openAdminOverlay);
