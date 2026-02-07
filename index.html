@@ -205,6 +205,47 @@
       </div>
     </section>
 
+    <section class="overlay hidden" id="play-overlay" hidden>
+      <div class="overlay-content play-content">
+        <div class="overlay-header">
+          <div>
+            <p class="status">Sistema de sacar cartas</p>
+            <h2>Zona de jogo</h2>
+          </div>
+          <button class="secondary" id="close-play">Fechar</button>
+        </div>
+        <div class="play-layout">
+          <aside class="play-panel">
+            <label class="field">
+              <span>Deck ativo</span>
+              <select id="play-deck-select">
+                <option value="">Selecione um deck</option>
+              </select>
+            </label>
+            <div class="play-actions">
+              <button id="draw-card">Sacar carta</button>
+              <button id="discard-hand" class="secondary">Descartar mão</button>
+            </div>
+            <div class="play-stats">
+              <p>Deck: <span id="play-deck-count">0</span> cartas</p>
+              <p>Mão: <span id="play-hand-count">0</span> cartas</p>
+              <p>Cemitério: <span id="play-discard-count">0</span> cartas</p>
+            </div>
+          </aside>
+          <div class="play-board">
+            <section>
+              <h3>Mão</h3>
+              <div id="play-hand" class="grid"></div>
+            </section>
+            <section>
+              <h3>Cemitério</h3>
+              <div id="play-discard" class="grid"></div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section class="overlay hidden" id="store-overlay" hidden>
       <div class="overlay-content">
         <div class="overlay-header">
