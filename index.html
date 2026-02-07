@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <button id="open-sidebar" class="menu-button" aria-label="Abrir menu">☰</button>
     <aside class="side-rail" id="side-rail">
       <div class="side-rail__brand">
         <span class="side-rail__logo">TT</span>
@@ -41,7 +42,6 @@
 
     <div class="page-content">
       <header class="top-bar">
-        <button id="open-sidebar" class="menu-button" aria-label="Abrir menu">☰</button>
         <button id="top-center-action" class="top-center-button">Ação especial</button>
         <div class="top-bar__left">
           <div class="brand">
@@ -181,7 +181,68 @@
           </div>
           <button class="secondary" id="close-deck-detail">Fechar</button>
         </div>
+        <div class="filters deck-detail-filters">
+          <select id="deck-detail-filter-type">
+            <option value="">Tipo (todos)</option>
+          </select>
+          <select id="deck-detail-filter-rarity">
+            <option value="">Raridade (todas)</option>
+          </select>
+          <select id="deck-detail-filter-class">
+            <option value="">Classe (todas)</option>
+          </select>
+          <input type="text" id="deck-detail-filter-text" placeholder="Buscar texto" />
+          <select id="deck-detail-sort">
+            <option value="manual">Manual</option>
+            <option value="recent">Mais recente</option>
+            <option value="oldest">Mais antiga</option>
+            <option value="az">A → Z</option>
+            <option value="za">Z → A</option>
+          </select>
+          <button id="deck-detail-clear-filters" class="secondary">Limpar</button>
+        </div>
         <div id="deck-detail-body" class="grid"></div>
+      </div>
+    </section>
+
+    <section class="overlay hidden" id="play-overlay" hidden>
+      <div class="overlay-content play-content">
+        <div class="overlay-header">
+          <div>
+            <p class="status">Sistema de sacar cartas</p>
+            <h2>Zona de jogo</h2>
+          </div>
+          <button class="secondary" id="close-play">Fechar</button>
+        </div>
+        <div class="play-layout">
+          <aside class="play-panel">
+            <label class="field">
+              <span>Deck ativo</span>
+              <select id="play-deck-select">
+                <option value="">Selecione um deck</option>
+              </select>
+            </label>
+            <div class="play-actions">
+              <button id="draw-card">Sacar carta</button>
+              <button id="discard-hand" class="secondary">Descartar mão</button>
+            </div>
+            <div class="play-stats">
+              <p>Deck: <span id="play-deck-count">0</span> cartas</p>
+              <p>Mão: <span id="play-hand-count">0</span> cartas</p>
+              <p>Cemitério: <span id="play-discard-count">0</span> cartas</p>
+            </div>
+          </aside>
+          <div class="play-board">
+            <section>
+              <h3>Mão</h3>
+              <div id="play-hand" class="grid"></div>
+            </section>
+            <section>
+              <h3>Cemitério</h3>
+              <div id="play-discard" class="grid"></div>
+            </section>
+          </div>
+        </div>
       </div>
     </section>
 
