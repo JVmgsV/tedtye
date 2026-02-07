@@ -865,6 +865,15 @@ const updateWallet = () => {
   updateSidebarSummary();
 };
 
+let deckDetailContext = null;
+let playContext = {
+  deckIds: [],
+  handIds: [],
+  discardIds: [],
+  ownerKey: null,
+  deckId: null,
+};
+
 const getDeckById = (ownerKey, deckId) => {
   const decks = state.decks[ownerKey] || [];
   return decks.find((deck) => deck.id === deckId) || null;
@@ -985,15 +994,6 @@ const discardPlayHand = () => {
   playContext.discardIds.push(...playContext.handIds);
   playContext.handIds = [];
   renderPlayZone();
-};
-
-let deckDetailContext = null;
-let playContext = {
-  deckIds: [],
-  handIds: [],
-  discardIds: [],
-  ownerKey: null,
-  deckId: null,
 };
 
 const buildFilterOptions = () => {
