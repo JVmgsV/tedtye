@@ -205,7 +205,7 @@
       </div>
     </section>
 
-    <section class="overlay hidden" id="play-overlay" hidden>
+    <section class="overlay play-overlay hidden" id="play-overlay" hidden>
       <div class="overlay-content play-content">
         <div class="overlay-header">
           <div>
@@ -216,22 +216,17 @@
         </div>
         <div class="play-layout">
           <div class="play-board">
-            <div class="play-row play-row--opponent">
-              <div class="play-slot">Carta inimiga</div>
-              <div class="play-slot">Carta inimiga</div>
-              <div class="play-slot">Carta inimiga</div>
-              <div class="play-slot">Carta inimiga</div>
-            </div>
             <div class="play-row play-row--center">
               <div class="play-center-card">Campo central</div>
-              <div class="play-zones">
-                <button id="draw-card" class="play-zone">Comprar cartas</button>
-                <button id="discard-hand" class="play-zone secondary">Cemitério</button>
-              </div>
+              <button id="draw-card" class="play-zone">Comprar cartas</button>
             </div>
             <div class="play-row play-row--hand">
               <h3>Mão</h3>
               <div id="play-hand" class="play-hand-grid"></div>
+            </div>
+            <div class="play-row play-row--graveyard">
+              <h3>Cemitério</h3>
+              <div id="play-discard" class="play-graveyard-zone">Arraste cartas aqui</div>
             </div>
           </div>
           <aside class="play-panel">
@@ -246,10 +241,7 @@
               <p>Mão: <span id="play-hand-count">0</span> cartas</p>
               <p>Cemitério: <span id="play-discard-count">0</span> cartas</p>
             </div>
-            <div>
-              <h3>Cemitério</h3>
-              <div id="play-discard" class="grid"></div>
-            </div>
+            <button id="discard-hand" class="secondary">Descartar mão</button>
           </aside>
         </div>
       </div>

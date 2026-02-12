@@ -916,7 +916,7 @@ const renderPlayZone = () => {
   const ownerKey = playContext.ownerKey;
   if (!ownerKey || !playContext.deckId) {
     ui.playHand.textContent = "Selecione um deck para sacar cartas.";
-    ui.playDiscard.textContent = "";
+    ui.playDiscard.textContent = "Arraste cartas aqui";
     updatePlayStats();
     return;
   }
@@ -936,6 +936,8 @@ const renderPlayZone = () => {
         buildCardElement(card, {
           className: "inventory-card",
           foil: item.foil,
+          draggable: true,
+          dataId: item.id,
           onClick: () => openCardModal(card, { foil: item.foil }),
         }),
       );
@@ -953,6 +955,40 @@ const renderPlayZone = () => {
       );
     });
   updatePlayStats();
+
+  let draggedId = null;
+  ui.playHand.ondragstart = (event) => {
+    const target = event.target.closest(".inventory-card");
+    if (!target) {
+      return;
+    }
+    draggedId = target.dataset.inventoryId;
+    event.dataTransfer.effectAllowed = "move";
+  };
+  ui.playDiscard.ondragover = (event) => {
+    event.preventDefault();
+    ui.playDiscard.classList.add("is-drop-target");
+  };
+  ui.playDiscard.ondragleave = () => {
+    ui.playDiscard.classList.remove("is-drop-target");
+  };
+  ui.playDiscard.ondrop = (event) => {
+    event.preventDefault();
+    ui.playDiscard.classList.remove("is-drop-target");
+    if (!draggedId) {
+      return;
+    }
+    const index = playContext.handIds.indexOf(draggedId);
+    if (index === -1) {
+      return;
+    }
+    playContext.handIds.splice(index, 1);
+    playContext.discardIds.push(draggedId);
+    renderPlayZone();
+  };
+  ui.playHand.ondragend = () => {
+    draggedId = null;
+  };
 };
 
 const openPlayOverlay = () => {
