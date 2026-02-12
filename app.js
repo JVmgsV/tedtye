@@ -108,8 +108,10 @@ const ui = {
   discardHand: document.getElementById("discard-hand"),
   playDeckCount: document.getElementById("play-deck-count"),
   playHandCount: document.getElementById("play-hand-count"),
+  playFieldCount: document.getElementById("play-field-count"),
   playDiscardCount: document.getElementById("play-discard-count"),
   playHand: document.getElementById("play-hand"),
+  playCenter: document.getElementById("play-center"),
   playDiscard: document.getElementById("play-discard"),
   sidebarUser: document.getElementById("sidebar-user"),
   sidebarCharacter: document.getElementById("sidebar-character"),
@@ -869,6 +871,7 @@ let deckDetailContext = null;
 let playContext = {
   deckIds: [],
   handIds: [],
+  fieldIds: [],
   discardIds: [],
   ownerKey: null,
   deckId: null,
@@ -898,6 +901,7 @@ const resetPlayContext = () => {
   playContext = {
     deckIds: [],
     handIds: [],
+    fieldIds: [],
     discardIds: [],
     ownerKey: getOwnerKey(),
     deckId: ui.playDeckSelect.value || null,
@@ -907,19 +911,23 @@ const resetPlayContext = () => {
 const updatePlayStats = () => {
   ui.playDeckCount.textContent = playContext.deckIds.length;
   ui.playHandCount.textContent = playContext.handIds.length;
+  ui.playFieldCount.textContent = playContext.fieldIds.length;
   ui.playDiscardCount.textContent = playContext.discardIds.length;
 };
 
 const renderPlayZone = () => {
   ui.playHand.innerHTML = "";
+  ui.playCenter.innerHTML = "";
   ui.playDiscard.innerHTML = "";
   const ownerKey = playContext.ownerKey;
   if (!ownerKey || !playContext.deckId) {
     ui.playHand.textContent = "Selecione um deck para sacar cartas.";
-    ui.playDiscard.textContent = "Arraste cartas aqui";
+    ui.playCenter.textContent = "Arraste cartas para o campo central";
+    ui.playDiscard.textContent = "Arraste cartas para o cemitério";
     updatePlayStats();
     return;
   }
+
   const mapItemToCard = (inventoryId) => {
     const item = (state.inventory[ownerKey] || []).find((entry) => entry.id === inventoryId);
     if (!item) {
@@ -928,67 +936,91 @@ const renderPlayZone = () => {
     const card = state.cards.find((entry) => entry.id === item.cardId);
     return card ? { card, item } : null;
   };
-  playContext.handIds
-    .map(mapItemToCard)
-    .filter(Boolean)
-    .forEach(({ card, item }) => {
-      ui.playHand.appendChild(
-        buildCardElement(card, {
-          className: "inventory-card",
-          foil: item.foil,
-          draggable: true,
-          dataId: item.id,
-          onClick: () => openCardModal(card, { foil: item.foil }),
-        }),
-      );
+
+  const createPlayCard = ({ card, item }) => {
+    const cardEl = buildCardElement(card, {
+      className: "inventory-card",
+      foil: item.foil,
+      draggable: true,
+      dataId: item.id,
+      onClick: () => openCardModal(card, { foil: item.foil }),
     });
-  playContext.discardIds
-    .map(mapItemToCard)
-    .filter(Boolean)
-    .forEach(({ card, item }) => {
-      ui.playDiscard.appendChild(
-        buildCardElement(card, {
-          className: "inventory-card",
-          foil: item.foil,
-          onClick: () => openCardModal(card, { foil: item.foil }),
-        }),
-      );
-    });
+    const wrapper = document.createElement("div");
+    wrapper.className = "play-card-resizer";
+    wrapper.appendChild(cardEl);
+    return wrapper;
+  };
+
+  playContext.handIds.map(mapItemToCard).filter(Boolean).forEach((entry) => {
+    ui.playHand.appendChild(createPlayCard(entry));
+  });
+  playContext.fieldIds.map(mapItemToCard).filter(Boolean).forEach((entry) => {
+    ui.playCenter.appendChild(createPlayCard(entry));
+  });
+  playContext.discardIds.map(mapItemToCard).filter(Boolean).forEach((entry) => {
+    ui.playDiscard.appendChild(createPlayCard(entry));
+  });
+
   updatePlayStats();
 
   let draggedId = null;
-  ui.playHand.ondragstart = (event) => {
-    const target = event.target.closest(".inventory-card");
-    if (!target) {
-      return;
+  const zones = [
+    { el: ui.playHand, key: "handIds", hint: "Selecione um deck para sacar cartas." },
+    { el: ui.playCenter, key: "fieldIds", hint: "Arraste cartas para o campo central" },
+    { el: ui.playDiscard, key: "discardIds", hint: "Arraste cartas para o cemitério" },
+  ];
+
+  const removeFromAll = (id) => {
+    zones.forEach((zone) => {
+      playContext[zone.key] = playContext[zone.key].filter((entryId) => entryId !== id);
+    });
+  };
+
+  zones.forEach((zone) => {
+    zone.el.ondragstart = (event) => {
+      const target = event.target.closest(".inventory-card");
+      if (!target) {
+        return;
+      }
+      draggedId = target.dataset.inventoryId;
+      if (event.dataTransfer) {
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", draggedId);
+      }
+    };
+    zone.el.ondragover = (event) => {
+      event.preventDefault();
+      if (event.dataTransfer) {
+        event.dataTransfer.dropEffect = "move";
+      }
+      zone.el.classList.add("is-drop-target");
+    };
+    zone.el.ondragleave = (event) => {
+      const relatedTarget = event.relatedTarget;
+      if (relatedTarget && zone.el.contains(relatedTarget)) {
+        return;
+      }
+      zone.el.classList.remove("is-drop-target");
+    };
+    zone.el.ondrop = (event) => {
+      event.preventDefault();
+      zone.el.classList.remove("is-drop-target");
+      const droppedId = draggedId || event.dataTransfer?.getData("text/plain");
+      if (!droppedId) {
+        return;
+      }
+      removeFromAll(droppedId);
+      playContext[zone.key].push(droppedId);
+      renderPlayZone();
+    };
+    zone.el.ondragend = () => {
+      draggedId = null;
+      zone.el.classList.remove("is-drop-target");
+    };
+    if (!zone.el.childElementCount) {
+      zone.el.textContent = zone.hint;
     }
-    draggedId = target.dataset.inventoryId;
-    event.dataTransfer.effectAllowed = "move";
-  };
-  ui.playDiscard.ondragover = (event) => {
-    event.preventDefault();
-    ui.playDiscard.classList.add("is-drop-target");
-  };
-  ui.playDiscard.ondragleave = () => {
-    ui.playDiscard.classList.remove("is-drop-target");
-  };
-  ui.playDiscard.ondrop = (event) => {
-    event.preventDefault();
-    ui.playDiscard.classList.remove("is-drop-target");
-    if (!draggedId) {
-      return;
-    }
-    const index = playContext.handIds.indexOf(draggedId);
-    if (index === -1) {
-      return;
-    }
-    playContext.handIds.splice(index, 1);
-    playContext.discardIds.push(draggedId);
-    renderPlayZone();
-  };
-  ui.playHand.ondragend = () => {
-    draggedId = null;
-  };
+  });
 };
 
 const openPlayOverlay = () => {
@@ -996,6 +1028,15 @@ const openPlayOverlay = () => {
   resetPlayContext();
   renderPlayZone();
   openOverlay(ui.playOverlay);
+};
+
+const openPlayExperience = (event) => {
+  if (event && (event.ctrlKey || event.metaKey)) {
+    const url = `${window.location.pathname}?play=1`;
+    window.open(url, "_blank", "noopener");
+    return;
+  }
+  openPlayOverlay();
 };
 
 const startPlayWithDeck = (deckId) => {
@@ -1010,6 +1051,7 @@ const startPlayWithDeck = (deckId) => {
   playContext = {
     deckIds: [...deck.cardIds],
     handIds: [],
+    fieldIds: [],
     discardIds: [],
     ownerKey,
     deckId,
@@ -2260,6 +2302,10 @@ const init = async () => {
   renderCharacters();
   renderPacks();
   refreshForCharacter();
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("play") === "1") {
+    openPlayOverlay();
+  }
 };
 
 ui.loginButton.addEventListener("click", login);
@@ -2332,7 +2378,7 @@ ui.deckDetailClearFilters.addEventListener("click", () => {
   ui.deckDetailSort.value = "manual";
   renderDeckDetailCards();
 });
-ui.topCenterAction.addEventListener("click", openPlayOverlay);
+ui.topCenterAction.addEventListener("click", openPlayExperience);
 ui.closePlay.addEventListener("click", () => closeOverlay(ui.playOverlay));
 ui.playOverlay.addEventListener("click", (event) => {
   if (event.target === ui.playOverlay) {
