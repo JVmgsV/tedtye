@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ted Tye Decks</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <button id="open-sidebar" class="menu-button" aria-label="Abrir menu">☰</button>
+    <aside class="side-rail" id="side-rail">
+      <div class="side-rail__brand">
+        <span class="side-rail__logo">TT</span>
+        <div>
+          <p class="side-rail__eyebrow">Menu fixo</p>
+          <h2>Central Ted Tye</h2>
+        </div>
+      </div>
+      <div class="side-rail__profile">
+        <div>
+          <p class="label">Usuário</p>
+          <p id="sidebar-user" class="value">Nenhum usuário</p>
+        </div>
+        <div>
+          <p class="label">Personagem ativo</p>
+          <p id="sidebar-character" class="value">Selecione um personagem</p>
+        </div>
+        <div>
+          <p class="label">Saldo</p>
+          <p id="sidebar-balance" class="value">0 moedas</p>
+        </div>
+      </div>
+      <nav class="side-rail__nav">
+        <button id="sidebar-open-store">Loja</button>
+        <button id="open-decks-view">Decks completos</button>
+        <button id="sidebar-open-admin" class="secondary">Área admin</button>
+      </nav>
+      <div class="side-rail__hint">
+        <p>Use o menu lateral para navegar entre os módulos.</p>
+      </div>
+    </aside>
+
+    <div class="page-content">
+      <header class="top-bar">
+        <button id="top-center-action" class="top-center-button">Ação especial</button>
+        <div class="top-bar__left">
+          <div class="brand">
+            <h1>Ted Tye Decks</h1>
+            <p>Construa personagens, gerencie o inventário e monte seus decks.</p>
+          </div>
+          <div class="login-area">
+            <label class="field">
+              <span>Login</span>
+              <input type="text" id="username-input" placeholder="Digite seu usuário" />
+            </label>
+            <button id="login-button">Entrar</button>
+            <button id="logout-button" class="secondary hidden">Sair</button>
+            <p class="status" id="login-status">Nenhum usuário autenticado.</p>
+          </div>
+        </div>
+        <div class="top-bar__right">
+          <nav class="top-links">
+            <button class="link-button" id="open-store">Loja</button>
+            <button class="link-button" id="open-admin">Admin</button>
+          </nav>
+          <div class="wallet-box">
+            <p class="label">Carteira</p>
+            <div class="wallet-row">
+              <span id="wallet-balance">Saldo: 0</span>
+              <button id="add-funds">Adicionar 100 moedas</button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main class="main-layout">
+      <section class="panel" id="character-panel">
+        <h2>Personagens</h2>
+        <p>Escolha um personagem para usar seus decks e cartas.</p>
+        <div class="form-row">
+          <input type="text" id="character-name" placeholder="Nome do personagem" />
+          <button id="create-character">Criar personagem</button>
+        </div>
+        <ul id="character-list" class="list"></ul>
+      </section>
+
+      <section class="panel" id="cards-panel">
+        <div class="panel-header">
+          <div>
+            <h2>Minhas cartas</h2>
+            <p>Cartas compradas na loja para este personagem.</p>
+          </div>
+          <div class="filters">
+            <select id="filter-type">
+              <option value="">Tipo (todos)</option>
+            </select>
+            <select id="filter-rarity">
+              <option value="">Raridade (todas)</option>
+            </select>
+            <select id="filter-class">
+              <option value="">Classe (todas)</option>
+            </select>
+            <input type="text" id="filter-text" placeholder="Buscar texto" />
+            <select id="sort-inventory">
+              <option value="manual">Manual</option>
+              <option value="recent">Mais recente</option>
+              <option value="oldest">Mais antiga</option>
+              <option value="az">A → Z</option>
+              <option value="za">Z → A</option>
+            </select>
+            <button id="clear-filters" class="secondary">Limpar</button>
+          </div>
+        </div>
+        <div id="inventory-list" class="grid"></div>
+      </section>
+
+      <section class="panel" id="decks-panel">
+        <div class="panel-header">
+          <div>
+            <h2>Decks</h2>
+            <p>Crie decks e selecione para jogar.</p>
+          </div>
+          <div class="form-row">
+            <input type="text" id="deck-name" placeholder="Nome do deck" />
+            <button id="create-deck">Criar deck</button>
+          </div>
+        </div>
+          <div class="deck-layout">
+            <aside class="deck-list">
+              <h3>Meus decks</h3>
+              <ul id="deck-list"></ul>
+            </aside>
+            <div class="deck-workspace">
+              <div class="deck-header">
+                <h3 id="deck-title">Selecione um deck</h3>
+                <span id="deck-count" class="badge">0 cartas</span>
+              </div>
+              <div class="filters deck-filters">
+                <select id="deck-filter-type">
+                  <option value="">Tipo (todos)</option>
+                </select>
+                <select id="deck-filter-rarity">
+                  <option value="">Raridade (todas)</option>
+                </select>
+                <select id="deck-filter-class">
+                  <option value="">Classe (todas)</option>
+                </select>
+                <input type="text" id="deck-filter-text" placeholder="Buscar texto" />
+                <select id="deck-sort">
+                  <option value="manual">Manual</option>
+                  <option value="recent">Mais recente</option>
+                  <option value="oldest">Mais antiga</option>
+                  <option value="az">A → Z</option>
+                  <option value="za">Z → A</option>
+                </select>
+                <button id="deck-clear-filters" class="secondary">Limpar</button>
+              </div>
+              <div id="deck-cards" class="grid"></div>
+              <p class="status" id="deck-status"></p>
+            </div>
+          </div>
+        </section>
+      </main>
+
+    <section class="overlay hidden" id="decks-view-overlay" hidden>
+      <div class="overlay-content decks-view-content">
+        <div class="overlay-header">
+          <h2>Decks por personagem</h2>
+          <button class="secondary" id="close-decks-view">Fechar</button>
+        </div>
+        <div id="decks-view-body" class="decks-view-body"></div>
+      </div>
+    </section>
+
+    <section class="overlay hidden" id="deck-detail-overlay" hidden>
+      <div class="overlay-content deck-detail-content">
+        <div class="overlay-header">
+          <div>
+            <p class="status" id="deck-detail-owner">Personagem</p>
+            <h2 id="deck-detail-title">Deck</h2>
+          </div>
+          <button class="secondary" id="close-deck-detail">Fechar</button>
+        </div>
+        <div class="filters deck-detail-filters">
+          <select id="deck-detail-filter-type">
+            <option value="">Tipo (todos)</option>
+          </select>
+          <select id="deck-detail-filter-rarity">
+            <option value="">Raridade (todas)</option>
+          </select>
+          <select id="deck-detail-filter-class">
+            <option value="">Classe (todas)</option>
+          </select>
+          <input type="text" id="deck-detail-filter-text" placeholder="Buscar texto" />
+          <select id="deck-detail-sort">
+            <option value="manual">Manual</option>
+            <option value="recent">Mais recente</option>
+            <option value="oldest">Mais antiga</option>
+            <option value="az">A → Z</option>
+            <option value="za">Z → A</option>
+          </select>
+          <button id="deck-detail-clear-filters" class="secondary">Limpar</button>
+        </div>
+        <div id="deck-detail-body" class="grid"></div>
+      </div>
+    </section>
+
+    <section class="overlay play-overlay hidden" id="play-overlay" hidden>
+      <div class="overlay-content play-content">
+        <div class="overlay-header">
+          <div>
+            <p class="status">Sistema de sacar cartas</p>
+            <h2>Zona de jogo</h2>
+          </div>
+          <button class="secondary" id="close-play">Fechar</button>
+        </div>
+        <div class="play-layout">
+          <div class="play-board">
+            <div class="play-row play-row--center">
+              <div class="play-center-card">Campo central</div>
+              <button id="draw-card" class="play-zone">Comprar cartas</button>
+            </div>
+            <div class="play-row play-row--hand">
+              <h3>Mão</h3>
+              <div id="play-hand" class="play-hand-grid"></div>
+            </div>
+            <div class="play-row play-row--graveyard">
+              <h3>Cemitério</h3>
+              <div id="play-discard" class="play-graveyard-zone">Arraste cartas aqui</div>
+            </div>
+          </div>
+          <aside class="play-panel">
+            <label class="field">
+              <span>Deck ativo</span>
+              <select id="play-deck-select">
+                <option value="">Selecione um deck</option>
+              </select>
+            </label>
+            <div class="play-stats">
+              <p>Deck: <span id="play-deck-count">0</span> cartas</p>
+              <p>Mão: <span id="play-hand-count">0</span> cartas</p>
+              <p>Cemitério: <span id="play-discard-count">0</span> cartas</p>
+            </div>
+            <button id="discard-hand" class="secondary">Descartar mão</button>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <section class="overlay hidden" id="store-overlay" hidden>
+      <div class="overlay-content">
+        <div class="overlay-header">
+          <h2>Loja</h2>
+          <button class="secondary" id="close-store">Fechar</button>
+        </div>
+        <p>Compre packs usando a carteira do personagem atual.</p>
+        <div id="packs-list" class="grid"></div>
+      </div>
+    </section>
+
+    <section class="overlay hidden" id="admin-overlay" hidden>
+      <div class="overlay-content">
+        <div class="overlay-header">
+          <h2>Admin</h2>
+          <button class="secondary" id="close-admin">Fechar</button>
+        </div>
+        <div id="admin-login" class="admin-login">
+          <input type="password" id="admin-password" placeholder="Senha do admin" />
+          <button id="admin-login-button">Entrar</button>
+          <p class="status" id="admin-login-status"></p>
+        </div>
+        <div id="admin-panel" class="admin-panel hidden">
+          <div class="admin-grid">
+            <div>
+              <h3>Nova carta</h3>
+              <div class="form-column">
+                <input type="text" id="card-name" placeholder="Nome" />
+                <input type="text" id="card-type" placeholder="Tipo (Token, etc.)" />
+                <input type="number" id="card-move" placeholder="MOV" min="0" />
+                <input type="number" id="card-mana" placeholder="Mana" min="0" />
+                <input type="text" id="card-class" placeholder="Classe" />
+                <select id="card-rarity">
+                  <option value="Common">Common</option>
+                  <option value="Uncommon">Uncommon</option>
+                  <option value="Rare">Rare</option>
+                  <option value="Super Rare">Super Rare</option>
+                  <option value="Ultra Rare">Ultra Rare</option>
+                  <option value="Legendary">Legendary</option>
+                  <option value="Secret Rare">Secret Rare</option>
+                </select>
+                <textarea id="card-description" placeholder="Descrição"></textarea>
+                <button id="add-card">Salvar carta</button>
+              </div>
+            </div>
+
+            <div>
+              <h3>Novo pack</h3>
+              <div class="form-column">
+                <input type="text" id="pack-name" placeholder="Nome do pack" />
+                <input type="number" id="pack-price" placeholder="Preço" min="0" />
+                <input type="number" id="pack-slots" placeholder="Cartas por pack" min="1" value="3" />
+                <label class="tiny">Probabilidades (%)</label>
+                <div class="form-row">
+                  <input type="number" id="chance-common" placeholder="Common" value="70" min="0" />
+                  <input type="number" id="chance-uncommon" placeholder="Uncommon" value="25" min="0" />
+                </div>
+                <div class="form-row">
+                  <input type="number" id="chance-rare" placeholder="Rare" value="5" min="0" />
+                  <input type="number" id="chance-epic" placeholder="Ultra Rare" value="0" min="0" />
+                </div>
+                <div class="form-row">
+                  <input type="number" id="chance-legendary" placeholder="Legendary" value="0" min="0" />
+                  <input type="number" id="chance-super-rare" placeholder="Super Rare" value="0" min="0" />
+                  <input type="number" id="chance-secret-rare" placeholder="Secret Rare" value="0" min="0" />
+                </div>
+                <button id="add-pack">Salvar pack</button>
+              </div>
+            </div>
+          </div>
+          <p class="status" id="admin-status"></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="overlay card-modal hidden" id="card-modal" hidden>
+      <div class="overlay-content card-modal-content">
+        <div class="overlay-header">
+          <h2>Detalhes da carta</h2>
+          <button class="secondary" id="close-card-modal">Fechar</button>
+        </div>
+        <div id="card-modal-body" class="card-modal-body"></div>
+      </div>
+    </section>
+
+    <section class="overlay pack-modal hidden" id="pack-modal" hidden>
+      <div class="overlay-content pack-modal-content">
+        <div class="overlay-header">
+          <h2>Abrindo pack</h2>
+          <button class="secondary" id="close-pack-modal">Fechar</button>
+        </div>
+        <div class="pack-modal-body">
+          <div class="pack-roll">
+            <span class="pack-roll__label">Resultado do dado</span>
+            <span id="pack-roll-result" class="pack-roll__value">-</span>
+          </div>
+          <p id="pack-roll-status" class="status"></p>
+          <div id="pack-roll-rarities" class="pack-roll-rarities"></div>
+          <div id="pack-result-cards" class="grid"></div>
+        </div>
+      </div>
+    </section>
+
+      <footer class="site-footer">
+        <p>Dados são salvos apenas no navegador (localStorage).</p>
+      </footer>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
