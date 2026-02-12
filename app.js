@@ -109,6 +109,7 @@ const ui = {
   playDeckCount: document.getElementById("play-deck-count"),
   playHandCount: document.getElementById("play-hand-count"),
   playDiscardCount: document.getElementById("play-discard-count"),
+  playField: document.getElementById("play-field"),
   playHand: document.getElementById("play-hand"),
   playDiscard: document.getElementById("play-discard"),
   sidebarUser: document.getElementById("sidebar-user"),
@@ -869,6 +870,7 @@ let deckDetailContext = null;
 let playContext = {
   deckIds: [],
   handIds: [],
+  fieldIds: [],
   discardIds: [],
   ownerKey: null,
   deckId: null,
@@ -898,6 +900,7 @@ const resetPlayContext = () => {
   playContext = {
     deckIds: [],
     handIds: [],
+    fieldIds: [],
     discardIds: [],
     ownerKey: getOwnerKey(),
     deckId: ui.playDeckSelect.value || null,
@@ -911,10 +914,12 @@ const updatePlayStats = () => {
 };
 
 const renderPlayZone = () => {
+  ui.playField.innerHTML = "";
   ui.playHand.innerHTML = "";
   ui.playDiscard.innerHTML = "";
   const ownerKey = playContext.ownerKey;
   if (!ownerKey || !playContext.deckId) {
+    ui.playField.textContent = "Arraste cartas para o campo central";
     ui.playHand.textContent = "Selecione um deck para sacar cartas.";
     ui.playDiscard.textContent = "Arraste cartas aqui";
     updatePlayStats();
@@ -928,6 +933,20 @@ const renderPlayZone = () => {
     const card = state.cards.find((entry) => entry.id === item.cardId);
     return card ? { card, item } : null;
   };
+  playContext.fieldIds
+    .map(mapItemToCard)
+    .filter(Boolean)
+    .forEach(({ card, item }) => {
+      ui.playField.appendChild(
+        buildCardElement(card, {
+          className: "inventory-card",
+          foil: item.foil,
+          draggable: true,
+          dataId: item.id,
+          onClick: () => openCardModal(card, { foil: item.foil }),
+        }),
+      );
+    });
   playContext.handIds
     .map(mapItemToCard)
     .filter(Boolean)
@@ -950,45 +969,94 @@ const renderPlayZone = () => {
         buildCardElement(card, {
           className: "inventory-card",
           foil: item.foil,
+          draggable: true,
+          dataId: item.id,
           onClick: () => openCardModal(card, { foil: item.foil }),
         }),
       );
     });
   updatePlayStats();
 
-  let draggedId = null;
-  ui.playHand.ondragstart = (event) => {
+  let dragged = null;
+  const zoneRefs = {
+    hand: ui.playHand,
+    field: ui.playField,
+    discard: ui.playDiscard,
+  };
+  const zoneIds = {
+    hand: playContext.handIds,
+    field: playContext.fieldIds,
+    discard: playContext.discardIds,
+  };
+  const resetDropHighlight = () => {
+    Object.values(zoneRefs).forEach((zone) => zone.classList.remove("is-drop-target"));
+  };
+  const moveCardBetweenPlayZones = (cardId, sourceZone, targetZone) => {
+    if (!cardId || !sourceZone || !targetZone || sourceZone === targetZone) {
+      return;
+    }
+    const sourceIds = zoneIds[sourceZone];
+    const targetIds = zoneIds[targetZone];
+    if (!sourceIds || !targetIds) {
+      return;
+    }
+    const index = sourceIds.indexOf(cardId);
+    if (index === -1) {
+      return;
+    }
+    sourceIds.splice(index, 1);
+    targetIds.push(cardId);
+    renderPlayZone();
+  };
+  const handleDragStart = (event) => {
     const target = event.target.closest(".inventory-card");
     if (!target) {
       return;
     }
-    draggedId = target.dataset.inventoryId;
+    const sourceZone = target.closest("#play-hand, #play-field, #play-discard");
+    if (!sourceZone) {
+      return;
+    }
+    dragged = {
+      id: target.dataset.inventoryId,
+      zone: sourceZone.id.replace("play-", ""),
+    };
     event.dataTransfer.effectAllowed = "move";
   };
-  ui.playDiscard.ondragover = (event) => {
-    event.preventDefault();
-    ui.playDiscard.classList.add("is-drop-target");
-  };
-  ui.playDiscard.ondragleave = () => {
-    ui.playDiscard.classList.remove("is-drop-target");
-  };
-  ui.playDiscard.ondrop = (event) => {
-    event.preventDefault();
-    ui.playDiscard.classList.remove("is-drop-target");
-    if (!draggedId) {
+  const handleDragOver = (event) => {
+    const zone = event.currentTarget;
+    if (!zone || !dragged) {
       return;
     }
-    const index = playContext.handIds.indexOf(draggedId);
-    if (index === -1) {
+    event.preventDefault();
+    resetDropHighlight();
+    zone.classList.add("is-drop-target");
+  };
+  const handleDragLeave = (event) => {
+    event.currentTarget.classList.remove("is-drop-target");
+  };
+  const handleDrop = (event) => {
+    const zone = event.currentTarget;
+    event.preventDefault();
+    resetDropHighlight();
+    if (!dragged || !zone) {
       return;
     }
-    playContext.handIds.splice(index, 1);
-    playContext.discardIds.push(draggedId);
-    renderPlayZone();
+    const targetZone = zone.id.replace("play-", "");
+    moveCardBetweenPlayZones(dragged.id, dragged.zone, targetZone);
   };
-  ui.playHand.ondragend = () => {
-    draggedId = null;
+  const handleDragEnd = () => {
+    dragged = null;
+    resetDropHighlight();
   };
+
+  [ui.playHand, ui.playField, ui.playDiscard].forEach((zone) => {
+    zone.ondragstart = handleDragStart;
+    zone.ondragover = handleDragOver;
+    zone.ondragleave = handleDragLeave;
+    zone.ondrop = handleDrop;
+    zone.ondragend = handleDragEnd;
+  });
 };
 
 const openPlayOverlay = () => {
@@ -1010,6 +1078,7 @@ const startPlayWithDeck = (deckId) => {
   playContext = {
     deckIds: [...deck.cardIds],
     handIds: [],
+    fieldIds: [],
     discardIds: [],
     ownerKey,
     deckId,

@@ -745,10 +745,14 @@ body.rail-open .page-content {
   min-height: 180px;
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.1);
-  border: 2px solid rgba(255, 255, 255, 0.4);
+  border: 2px dashed rgba(255, 255, 255, 0.5);
   color: #fff;
-  display: grid;
-  place-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  align-content: flex-start;
+  gap: 12px;
+  padding: 12px;
   font-weight: 600;
 }
 
@@ -786,7 +790,9 @@ body.rail-open .page-content {
   gap: 12px;
 }
 
-.play-graveyard-zone.is-drop-target {
+.play-center-card.is-drop-target,
+.play-graveyard-zone.is-drop-target,
+.play-hand-grid.is-drop-target {
   border-color: #f5c400;
   box-shadow: 0 0 0 2px rgba(245, 196, 0, 0.4);
 }
