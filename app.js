@@ -18,7 +18,6 @@ const ui = {
   logoutButton: document.getElementById("logout-button"),
   loginStatus: document.getElementById("login-status"),
   walletBalance: document.getElementById("wallet-balance"),
-  addFunds: document.getElementById("add-funds"),
   openStore: document.getElementById("open-store"),
   openAdmin: document.getElementById("open-admin"),
   storeOverlay: document.getElementById("store-overlay"),
@@ -566,7 +565,87 @@ const defaultCards = [
     description:
       "Teste de Des maior que 10. Você joga sua arma para suas costas, segura no fio e desce a Kisarigama na cabeça do inimigo.",
   },
+  {
+    id: 42,
+    name: "Generic Pills",
+    type: "Item",
+    move: 0,
+    mana: 0,
+    rarity: "Common",
+    class: "Uso 1",
+    description: "Para sangramento e dores de cabeça. (1d6 +HP).",
+  },
+  {
+    id: 43,
+    name: "Biker Gloves",
+    type: "Acessorio",
+    move: 0,
+    mana: 0,
+    rarity: "Common",
+    class: "Ninja",
+    description:
+      "Brother não esquece de colocar isso quando for dirigir valeu. +1 Res +1 For.",
+  },
+  {
+    id: 44,
+    name: "Reemitar",
+    type: "Weapon",
+    move: 0,
+    mana: 0,
+    rarity: "Common",
+    class: "Ninja",
+    description:
+      "Uma Symittara verde e forte como um tronco de árvore. Seu ataque tem splash damage para trás. +3 aFor.",
+  },
+  {
+    id: 45,
+    name: "Boomerang de Ferro",
+    type: "Arma",
+    move: 0,
+    mana: 0,
+    rarity: "Common",
+    class: "Ninja",
+    description:
+      "Um boomerangue bem afiado. Se equipado com uma armadura de ferro, +3 de Res para armadura até o fim da DRB. +2 aPDF +3 Arm.",
+  },
+  {
+    id: 46,
+    name: "O Amolador",
+    type: "Item",
+    move: 0,
+    mana: 0,
+    rarity: "Common",
+    class: "Uso 3",
+    description:
+      "Aumenta a DRB de um item cortante em 1 e a For em 2. Um item não pode ser amolado duas vezes.",
+  },
+  {
+    id: 47,
+    name: "Neo-Ninja Belt",
+    type: "Acessorio",
+    move: 0,
+    mana: 0,
+    rarity: "Secret Rare",
+    class: "Ninja",
+    description:
+      "Carta grande com vários efeitos: pode usar 1 de Habilidade para criar itens tecno-mágicos. Disposable Body (Richi): cria réplica com topo de pólvora; ao ser atacado pode pagar 30 Mana e lançar-se ao céu. Mini Vertebral Cam (1 Uso): câmera com visão noturna commando 14226 por 24h. Holochamber (Field): campo de treinamento holográfico que aumenta richi ninja em +1 turno. Saber Kunai (Arma/1 DRB): kunai a laser, +8 aFor +3 Vel. Besouro Rastreador (Pet): rastreia alvo e mostra localização, difícil de detectar.",
+  },
 ];
+
+const syncDefaultCards = () => {
+  const byId = new Map(state.cards.map((card) => [card.id, card]));
+  let changed = false;
+  defaultCards.forEach((card) => {
+    if (!byId.has(card.id)) {
+      state.cards.push({ ...card });
+      changed = true;
+    }
+  });
+  if (changed) {
+    state.cards.sort((a, b) => a.id - b.id);
+  }
+  return changed;
+};
 
 const ninjaRollTable = [
   { rarities: ["Common", "Common", "Uncommon", "Rare", "Rare", "Super Rare"] },
@@ -794,9 +873,12 @@ const loadState = async () => {
   const payload = await api.loadState();
   if (payload) {
     assignState(payload);
-    return;
+  } else {
+    loadStateFromStorage();
   }
-  loadStateFromStorage();
+  if (syncDefaultCards()) {
+    saveState();
+  }
 };
 
 const saveStateToStorage = () => {
@@ -1523,15 +1605,26 @@ const renameCharacter = (characterId) => {
   updateSidebarSummary();
 };
 
-const updateBalance = () => {
+const editBalance = () => {
   const ownerKey = getOwnerKey();
   if (!ownerKey) {
     setStatus("Selecione um personagem para usar a carteira.");
     return;
   }
-  state.balances[ownerKey] = (state.balances[ownerKey] || 0) + 100;
+  const current = Number(state.balances[ownerKey] || 0);
+  const typed = window.prompt("Digite o novo saldo deste personagem:", String(current));
+  if (typed === null) {
+    return;
+  }
+  const nextValue = Number(typed);
+  if (!Number.isFinite(nextValue) || nextValue < 0) {
+    setStatus("Digite um valor válido (0 ou maior).");
+    return;
+  }
+  state.balances[ownerKey] = Math.floor(nextValue);
   saveState();
   updateWallet();
+  setStatus("Carteira atualizada.");
 };
 
 const rollDice = (sides) => Math.floor(Math.random() * sides) + 1;
@@ -2311,7 +2404,7 @@ const init = async () => {
 ui.loginButton.addEventListener("click", login);
 ui.logoutButton.addEventListener("click", logout);
 ui.createCharacter.addEventListener("click", createCharacter);
-ui.addFunds.addEventListener("click", updateBalance);
+ui.walletBalance.addEventListener("dblclick", editBalance);
 ui.openStore.addEventListener("click", () => openOverlay(ui.storeOverlay));
 ui.closeStore.addEventListener("click", () => closeOverlay(ui.storeOverlay));
 ui.openAdmin.addEventListener("click", openAdminOverlay);

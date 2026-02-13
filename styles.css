@@ -243,6 +243,11 @@ button.secondary {
   gap: 10px;
 }
 
+#wallet-balance {
+  cursor: text;
+  font-weight: 600;
+}
+
 .list {
   list-style: none;
   padding: 0;
