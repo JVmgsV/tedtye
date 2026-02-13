@@ -821,9 +821,30 @@ const normalizeInventory = () => {
       cardId: item.cardId,
       acquiredAt: item.acquiredAt || new Date().toISOString(),
       foil: item.foil || false,
+      durability:
+        item.durability ??
+        (() => {
+          const card = state.cards.find((entry) => entry.id === item.cardId);
+          if (!card || !isWeaponCard(card)) {
+            return null;
+          }
+          return randomDurability();
+        })(),
     }));
   });
 };
+
+const isWeaponCard = (card) => /arma|weapon/i.test(String(card?.type || ""));
+
+const randomDurability = () => Math.floor(Math.random() * 4) + 1;
+
+const createInventoryItem = (card, foil = false) => ({
+  id: crypto.randomUUID(),
+  cardId: card.id,
+  acquiredAt: new Date().toISOString(),
+  foil,
+  durability: isWeaponCard(card) ? randomDurability() : null,
+});
 
 const loadStateFromStorage = () => {
   state.users = storage.load(storageKeys.users, []);
@@ -1023,9 +1044,10 @@ const renderPlayZone = () => {
     const cardEl = buildCardElement(card, {
       className: "inventory-card",
       foil: item.foil,
+      durability: item.durability,
       draggable: true,
       dataId: item.id,
-      onClick: () => openCardModal(card, { foil: item.foil }),
+      onClick: () => openCardModal(card, { foil: item.foil, durability: item.durability }),
     });
     const wrapper = document.createElement("div");
     wrapper.className = "play-card-resizer";
@@ -1343,7 +1365,9 @@ const buildCardElement = (card, options = {}) => {
   title.textContent = formatCardTitle(card);
   const meta = document.createElement("p");
   meta.className = "tiny";
-  meta.textContent = `${card.type} • MOV ${card.move} • Mana ${card.mana} • ${card.class}`;
+  const durabilityText =
+    typeof options.durability === "number" ? ` • DBR ${options.durability}` : "";
+  meta.textContent = `${card.type} • MOV ${card.move} • Mana ${card.mana} • ${card.class}${durabilityText}`;
   const desc = document.createElement("p");
   desc.textContent = card.description;
   const chips = document.createElement("div");
@@ -1359,6 +1383,12 @@ const buildCardElement = (card, options = {}) => {
     foilChip.className = "chip";
     foilChip.textContent = "Foil";
     chips.appendChild(foilChip);
+  }
+  if (typeof options.durability === "number") {
+    const durabilityChip = document.createElement("span");
+    durabilityChip.className = "chip";
+    durabilityChip.textContent = `DBR ${options.durability}`;
+    chips.appendChild(durabilityChip);
   }
 
   container.append(title, meta, desc, chips);
@@ -1404,9 +1434,10 @@ const createInventoryCard = (card, inventoryId, options = {}) => {
     className: "inventory-card",
     actions,
     foil: options.foil,
+    durability: options.durability,
     draggable: true,
     dataId: inventoryId,
-    onClick: () => openCardModal(card, { foil: options.foil }),
+    onClick: () => openCardModal(card, { foil: options.foil, durability: options.durability }),
   });
 };
 
@@ -1521,7 +1552,9 @@ const renderInventory = () => {
   }
 
   sortItems(visibleItems, ui.sortInventory.value).forEach(({ item, card }) => {
-    ui.inventoryList.appendChild(createInventoryCard(card, item.id, { foil: item.foil }));
+    ui.inventoryList.appendChild(
+      createInventoryCard(card, item.id, { foil: item.foil, durability: item.durability }),
+    );
   });
 };
 
@@ -1707,28 +1740,20 @@ const openPack = async (packId) => {
     });
     rollResult.rarities.forEach((rarity) => {
       const card = pickCardByRarity(rarity);
-      pulls.push(card);
-      state.inventory[ownerKey].push({
-        id: crypto.randomUUID(),
-        cardId: card.id,
-        acquiredAt: new Date().toISOString(),
-        foil: rollResult.foil,
-      });
+      const item = createInventoryItem(card, rollResult.foil);
+      pulls.push({ card, item });
+      state.inventory[ownerKey].push(item);
     });
   } else {
     for (let i = 0; i < pack.slots; i += 1) {
       const rarity = rollRarity(pack.chances);
       const card = pickCardByRarity(rarity);
-      pulls.push(card);
-      state.inventory[ownerKey].push({
-        id: crypto.randomUUID(),
-        cardId: card.id,
-        acquiredAt: new Date().toISOString(),
-        foil: false,
-      });
+      const item = createInventoryItem(card, false);
+      pulls.push({ card, item });
+      state.inventory[ownerKey].push(item);
     }
     ui.packRollRarities.innerHTML = "";
-    pulls.forEach((card) => {
+    pulls.forEach(({ card }) => {
       const chip = document.createElement("span");
       chip.className = "chip";
       chip.textContent = card.rarity;
@@ -1739,17 +1764,21 @@ const openPack = async (packId) => {
   updateWallet();
   renderInventory();
   ui.packResultCards.innerHTML = "";
-  pulls.forEach((card) => {
+  pulls.forEach(({ card, item }) => {
     const cardEl = buildCardElement(card, {
       className: "inventory-card pack-result-card",
       foil: foilApplied,
+      durability: item.durability,
     });
     ui.packResultCards.appendChild(cardEl);
   });
   const foilNote = foilApplied ? " (Foil!)" : "";
   setStatus(
     `Você abriu ${pack.name}${resultInfo}${foilNote} e recebeu ${pulls
-      .map(formatCardTitle)
+      .map(({ card, item }) => {
+        const dbr = typeof item.durability === "number" ? ` (DBR ${item.durability})` : "";
+        return `${formatCardTitle(card)}${dbr}`;
+      })
       .join(", ")}.`,
   );
   setTimeout(() => {
@@ -2028,9 +2057,10 @@ const renderDecks = () => {
         className: "deck-card",
         actions,
         foil: item.foil,
+        durability: item.durability,
         draggable: true,
         dataId: item.id,
-        onClick: () => openCardModal(card, { foil: item.foil }),
+        onClick: () => openCardModal(card, { foil: item.foil, durability: item.durability }),
       }),
     );
   });
@@ -2345,9 +2375,10 @@ const renderDeckDetailCards = () => {
       buildCardElement(card, {
         className: "inventory-card",
         foil: item.foil,
+        durability: item.durability,
         draggable: true,
         dataId: item.id,
-        onClick: () => openCardModal(card, { foil: item.foil }),
+        onClick: () => openCardModal(card, { foil: item.foil, durability: item.durability }),
       }),
     );
   });
@@ -2359,6 +2390,7 @@ const openCardModal = (card, options = {}) => {
     buildCardElement(card, {
       className: "inventory-card card-modal-card",
       foil: options.foil,
+      durability: options.durability,
     }),
   );
   openOverlay(ui.cardModal);
