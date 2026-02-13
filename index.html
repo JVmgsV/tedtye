@@ -42,7 +42,7 @@
 
     <div class="page-content">
       <header class="top-bar">
-        <button id="top-center-action" class="top-center-button">Ação especial</button>
+        <button id="top-center-action" class="top-center-button" type="button">Ação especial</button>
         <div class="top-bar__left">
           <div class="brand">
             <h1>Ted Tye Decks</h1>
@@ -217,7 +217,7 @@
         <div class="play-layout">
           <div class="play-board">
             <div class="play-row play-row--center">
-              <div class="play-center-card">Campo central</div>
+              <div id="play-center" class="play-center-card">Arraste cartas para o campo central</div>
               <button id="draw-card" class="play-zone">Comprar cartas</button>
             </div>
             <div class="play-row play-row--hand">
@@ -239,6 +239,7 @@
             <div class="play-stats">
               <p>Deck: <span id="play-deck-count">0</span> cartas</p>
               <p>Mão: <span id="play-hand-count">0</span> cartas</p>
+              <p>Campo: <span id="play-field-count">0</span> cartas</p>
               <p>Cemitério: <span id="play-discard-count">0</span> cartas</p>
             </div>
             <button id="discard-hand" class="secondary">Descartar mão</button>
