@@ -34,3 +34,5 @@ Depois disso, a API `/api/state` passa a ler/gravar no KV.
 - O **Admin** usa a senha padrão `1234` para cadastrar cartas e packs.
 
 Os dados ficam salvos no Vercel KV (ou no arquivo `data/db.json` em ambiente local).
+
+> Branch marker: retry/upload-test-2
