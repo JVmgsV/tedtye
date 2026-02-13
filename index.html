@@ -77,6 +77,29 @@
       <section class="panel" id="character-panel">
         <h2>Personagens</h2>
         <p>Escolha um personagem para usar seus decks e cartas.</p>
+        <div id="character-bars" class="character-bars hidden">
+          <h3 id="character-bars-name">Personagem</h3>
+          <div class="bar-group">
+            <div class="bar-label-row">
+              <span>HP</span>
+              <span id="character-hp-text">0/0</span>
+            </div>
+            <div class="status-bar">
+              <div id="character-hp-fill" class="status-bar-fill hp"></div>
+            </div>
+          </div>
+          <div class="bar-group">
+            <div class="bar-label-row">
+              <span>MP</span>
+              <span id="character-mp-text">0/0</span>
+            </div>
+            <div class="status-bar">
+              <div id="character-mp-fill" class="status-bar-fill mp"></div>
+            </div>
+          </div>
+          <p class="status">MOV: <strong id="character-mov-text">0/0</strong></p>
+          <p class="status">Ações: <strong id="character-actions">0</strong></p>
+        </div>
         <div class="form-row">
           <input type="text" id="character-name" placeholder="Nome do personagem" />
           <button id="create-character">Criar personagem</button>
@@ -230,6 +253,29 @@
             </div>
           </div>
           <aside class="play-panel">
+            <div id="play-character-bars" class="character-bars hidden compact">
+              <h3 id="play-character-bars-name">Personagem</h3>
+              <div class="bar-group">
+                <div class="bar-label-row">
+                  <span>HP</span>
+                  <span id="play-hp-text">0/0</span>
+                </div>
+                <div class="status-bar">
+                  <div id="play-hp-fill" class="status-bar-fill hp"></div>
+                </div>
+              </div>
+              <div class="bar-group">
+                <div class="bar-label-row">
+                  <span>MP</span>
+                  <span id="play-mp-text">0/0</span>
+                </div>
+                <div class="status-bar">
+                  <div id="play-mp-fill" class="status-bar-fill mp"></div>
+                </div>
+              </div>
+              <p class="status">MOV: <strong id="play-mov-text">0/0</strong></p>
+              <p class="status">Ações: <strong id="play-actions">0</strong></p>
+            </div>
             <label class="field">
               <span>Deck ativo</span>
               <select id="play-deck-select">
@@ -242,6 +288,7 @@
               <p>Campo: <span id="play-field-count">0</span> cartas</p>
               <p>Cemitério: <span id="play-discard-count">0</span> cartas</p>
             </div>
+            <button id="reset-play-mov" class="secondary">Resetar MOV</button>
             <button id="discard-hand" class="secondary">Descartar mão</button>
           </aside>
         </div>

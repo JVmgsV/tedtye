@@ -46,6 +46,14 @@ const ui = {
   characterName: document.getElementById("character-name"),
   createCharacter: document.getElementById("create-character"),
   characterList: document.getElementById("character-list"),
+  characterBars: document.getElementById("character-bars"),
+  characterBarsName: document.getElementById("character-bars-name"),
+  characterHpFill: document.getElementById("character-hp-fill"),
+  characterHpText: document.getElementById("character-hp-text"),
+  characterMpFill: document.getElementById("character-mp-fill"),
+  characterMpText: document.getElementById("character-mp-text"),
+  characterMovText: document.getElementById("character-mov-text"),
+  characterActions: document.getElementById("character-actions"),
   deckName: document.getElementById("deck-name"),
   createDeck: document.getElementById("create-deck"),
   deckList: document.getElementById("deck-list"),
@@ -105,6 +113,7 @@ const ui = {
   playDeckSelect: document.getElementById("play-deck-select"),
   drawCard: document.getElementById("draw-card"),
   discardHand: document.getElementById("discard-hand"),
+  resetPlayMov: document.getElementById("reset-play-mov"),
   playDeckCount: document.getElementById("play-deck-count"),
   playHandCount: document.getElementById("play-hand-count"),
   playFieldCount: document.getElementById("play-field-count"),
@@ -112,6 +121,14 @@ const ui = {
   playHand: document.getElementById("play-hand"),
   playCenter: document.getElementById("play-center"),
   playDiscard: document.getElementById("play-discard"),
+  playCharacterBars: document.getElementById("play-character-bars"),
+  playCharacterBarsName: document.getElementById("play-character-bars-name"),
+  playHpFill: document.getElementById("play-hp-fill"),
+  playHpText: document.getElementById("play-hp-text"),
+  playMpFill: document.getElementById("play-mp-fill"),
+  playMpText: document.getElementById("play-mp-text"),
+  playMovText: document.getElementById("play-mov-text"),
+  playActions: document.getElementById("play-actions"),
   sidebarUser: document.getElementById("sidebar-user"),
   sidebarCharacter: document.getElementById("sidebar-character"),
   sidebarBalance: document.getElementById("sidebar-balance"),
@@ -821,6 +838,15 @@ const normalizeInventory = () => {
       cardId: item.cardId,
       acquiredAt: item.acquiredAt || new Date().toISOString(),
       foil: item.foil || false,
+      usesRemaining:
+        item.usesRemaining ??
+        (() => {
+          const card = state.cards.find((entry) => entry.id === item.cardId);
+          if (!card) {
+            return null;
+          }
+          return extractUsesFromCard(card);
+        })(),
       durability:
         item.durability ??
         (() => {
@@ -836,6 +862,22 @@ const normalizeInventory = () => {
 
 const isWeaponCard = (card) => /arma|weapon/i.test(String(card?.type || ""));
 
+const extractUsesFromCard = (card) => {
+  const source = `${card.type} ${card.class} ${card.description} ${card.name}`;
+  const match = source.match(/(?:uso\s*(\d+)|(\d+)\s*uso)/i);
+  const value = Number(match?.[1] || match?.[2] || 0);
+  return Number.isFinite(value) && value > 0 ? value : null;
+};
+
+const parseHpCost = (card) => {
+  const source = `${card.description} ${card.name}`;
+  const match = source.match(/(\d+)\s*hp/i);
+  if (!match) {
+    return 0;
+  }
+  return Math.max(0, Number(match[1] || 0));
+};
+
 const randomDurability = () => Math.floor(Math.random() * 4) + 1;
 
 const createInventoryItem = (card, foil = false) => ({
@@ -844,6 +886,7 @@ const createInventoryItem = (card, foil = false) => ({
   acquiredAt: new Date().toISOString(),
   foil,
   durability: isWeaponCard(card) ? randomDurability() : null,
+  usesRemaining: extractUsesFromCard(card),
 });
 
 const loadStateFromStorage = () => {
@@ -900,6 +943,9 @@ const loadState = async () => {
   if (syncDefaultCards()) {
     saveState();
   }
+  if (normalizeCharacterStats()) {
+    saveState();
+  }
 };
 
 const saveStateToStorage = () => {
@@ -951,6 +997,95 @@ const getOwnerKey = () => {
   return character ? character.id : null;
 };
 
+const ensureCharacterStats = (character) => {
+  if (!character.stats) {
+    character.stats = {
+      hpMax: 100,
+      hpCurrent: 100,
+      mpMax: 60,
+      mpCurrent: 60,
+      movMax: 3,
+      movCurrent: 3,
+      actions: 3,
+    };
+    return true;
+  }
+  const nextStats = {
+    hpMax: Math.max(1, Number(character.stats.hpMax || 100)),
+    hpCurrent: Math.max(0, Number(character.stats.hpCurrent ?? character.stats.hpMax ?? 100)),
+    mpMax: Math.max(1, Number(character.stats.mpMax || 60)),
+    mpCurrent: Math.max(0, Number(character.stats.mpCurrent ?? character.stats.mpMax ?? 60)),
+    movMax: Math.max(0, Number(character.stats.movMax ?? 3)),
+    movCurrent: Math.max(0, Number(character.stats.movCurrent ?? character.stats.movMax ?? 3)),
+    actions: Math.max(0, Number(character.stats.actions ?? 3)),
+  };
+  nextStats.hpCurrent = Math.min(nextStats.hpCurrent, nextStats.hpMax);
+  nextStats.mpCurrent = Math.min(nextStats.mpCurrent, nextStats.mpMax);
+  nextStats.movCurrent = Math.min(nextStats.movCurrent, nextStats.movMax);
+  const changed = JSON.stringify(character.stats) !== JSON.stringify(nextStats);
+  character.stats = nextStats;
+  return changed;
+};
+
+const normalizeCharacterStats = () => {
+  let changed = false;
+  Object.values(state.characters).forEach((characters) => {
+    (characters || []).forEach((character) => {
+      if (ensureCharacterStats(character)) {
+        changed = true;
+      }
+    });
+  });
+  return changed;
+};
+
+const renderCharacterBars = () => {
+  const character = getSelectedCharacter();
+  const targets = [
+    {
+      root: ui.characterBars,
+      name: ui.characterBarsName,
+      hpFill: ui.characterHpFill,
+      hpText: ui.characterHpText,
+      mpFill: ui.characterMpFill,
+      mpText: ui.characterMpText,
+      movText: ui.characterMovText,
+      actions: ui.characterActions,
+    },
+    {
+      root: ui.playCharacterBars,
+      name: ui.playCharacterBarsName,
+      hpFill: ui.playHpFill,
+      hpText: ui.playHpText,
+      mpFill: ui.playMpFill,
+      mpText: ui.playMpText,
+      movText: ui.playMovText,
+      actions: ui.playActions,
+    },
+  ];
+
+  targets.forEach((target) => {
+    if (!target.root) {
+      return;
+    }
+    if (!character) {
+      target.root.classList.add("hidden");
+      return;
+    }
+    ensureCharacterStats(character);
+    const hpPct = Math.max(0, Math.min(100, (character.stats.hpCurrent / character.stats.hpMax) * 100));
+    const mpPct = Math.max(0, Math.min(100, (character.stats.mpCurrent / character.stats.mpMax) * 100));
+    target.root.classList.remove("hidden");
+    target.name.textContent = character.name;
+    target.hpText.textContent = `${character.stats.hpCurrent}/${character.stats.hpMax}`;
+    target.mpText.textContent = `${character.stats.mpCurrent}/${character.stats.mpMax}`;
+    target.movText.textContent = `${character.stats.movCurrent}/${character.stats.movMax}`;
+    target.actions.textContent = String(character.stats.actions);
+    target.hpFill.style.width = `${hpPct}%`;
+    target.mpFill.style.width = `${mpPct}%`;
+  });
+};
+
 const updateSidebarSummary = () => {
   if (!ui.sidebarUser) {
     return;
@@ -976,6 +1111,7 @@ let playContext = {
   handIds: [],
   fieldIds: [],
   discardIds: [],
+  tokenCards: [],
   ownerKey: null,
   deckId: null,
 };
@@ -1006,6 +1142,7 @@ const resetPlayContext = () => {
     handIds: [],
     fieldIds: [],
     discardIds: [],
+    tokenCards: [],
     ownerKey: getOwnerKey(),
     deckId: ui.playDeckSelect.value || null,
   };
@@ -1014,8 +1151,91 @@ const resetPlayContext = () => {
 const updatePlayStats = () => {
   ui.playDeckCount.textContent = playContext.deckIds.length;
   ui.playHandCount.textContent = playContext.handIds.length;
-  ui.playFieldCount.textContent = playContext.fieldIds.length;
+  ui.playFieldCount.textContent = playContext.fieldIds.length + playContext.tokenCards.length;
   ui.playDiscardCount.textContent = playContext.discardIds.length;
+};
+
+const findPlayZoneKeyByItemId = (itemId) => {
+  if (playContext.handIds.includes(itemId)) {
+    return "handIds";
+  }
+  if (playContext.fieldIds.includes(itemId)) {
+    return "fieldIds";
+  }
+  if (playContext.discardIds.includes(itemId)) {
+    return "discardIds";
+  }
+  return null;
+};
+
+const movePlayItemToDiscard = (itemId) => {
+  ["handIds", "fieldIds"].forEach((key) => {
+    playContext[key] = playContext[key].filter((id) => id !== itemId);
+  });
+  if (!playContext.discardIds.includes(itemId)) {
+    playContext.discardIds.push(itemId);
+  }
+};
+
+const usePlayCard = (card, item) => {
+  const character = getSelectedCharacter();
+  if (!character) {
+    setStatus("Selecione um personagem.");
+    return;
+  }
+  ensureCharacterStats(character);
+  const hpCost = parseHpCost(card);
+  const manaCost = Number(card.mana || 0);
+  const movCost = Number(card.move || 0);
+  if (character.stats.mpCurrent < manaCost) {
+    setStatus("MP insuficiente para usar a carta.");
+    return;
+  }
+  if (character.stats.hpCurrent < hpCost) {
+    setStatus("HP insuficiente para usar a carta.");
+    return;
+  }
+  if (character.stats.movCurrent < movCost) {
+    setStatus("MOV insuficiente para usar a carta.");
+    return;
+  }
+
+  const zone = findPlayZoneKeyByItemId(item.id);
+  if (!zone || zone === "discardIds") {
+    setStatus("Essa carta não pode ser usada do cemitério.");
+    return;
+  }
+
+  character.stats.mpCurrent -= manaCost;
+  character.stats.hpCurrent -= hpCost;
+  character.stats.movCurrent -= movCost;
+
+  const hasCost = manaCost > 0 || hpCost > 0 || movCost > 0;
+  if (typeof item.usesRemaining === "number") {
+    item.usesRemaining = Math.max(0, item.usesRemaining - 1);
+  }
+  if (typeof item.durability === "number") {
+    item.durability = Math.max(0, item.durability - 1);
+  }
+
+  const depletedDurability = typeof item.durability === "number" && item.durability <= 0;
+  const depletedUses = typeof item.usesRemaining === "number" && item.usesRemaining <= 0;
+
+  if (card.id === 1 || card.name.toLowerCase().includes("bullseye")) {
+    playContext.tokenCards.push({
+      id: crypto.randomUUID(),
+      name: `${card.name} Token`,
+      description: "Token gerado pela carta usada.",
+    });
+  }
+
+  if (hasCost || depletedDurability || depletedUses) {
+    movePlayItemToDiscard(item.id);
+  }
+
+  saveState();
+  renderCharacterBars();
+  renderPlayZone();
 };
 
 const renderPlayZone = () => {
@@ -1041,13 +1261,37 @@ const renderPlayZone = () => {
   };
 
   const createPlayCard = ({ card, item }) => {
+    const actions = document.createElement("div");
+    actions.className = "inventory-actions";
+    const hpCost = parseHpCost(card);
+    const hasUseButton =
+      Number(card.mana || 0) > 0 ||
+      Number(card.move || 0) > 0 ||
+      hpCost > 0 ||
+      typeof item.durability === "number" ||
+      typeof item.usesRemaining === "number";
+    if (hasUseButton) {
+      const useButton = document.createElement("button");
+      useButton.className = "secondary";
+      useButton.textContent = "Usar";
+      useButton.addEventListener("click", () => usePlayCard(card, item));
+      actions.appendChild(useButton);
+    }
+
     const cardEl = buildCardElement(card, {
       className: "inventory-card",
       foil: item.foil,
       durability: item.durability,
+      usesRemaining: item.usesRemaining,
+      actions,
       draggable: true,
       dataId: item.id,
-      onClick: () => openCardModal(card, { foil: item.foil, durability: item.durability }),
+      onClick: () =>
+        openCardModal(card, {
+          foil: item.foil,
+          durability: item.durability,
+          usesRemaining: item.usesRemaining,
+        }),
     });
     const wrapper = document.createElement("div");
     wrapper.className = "play-card-resizer";
@@ -1060,6 +1304,12 @@ const renderPlayZone = () => {
   });
   playContext.fieldIds.map(mapItemToCard).filter(Boolean).forEach((entry) => {
     ui.playCenter.appendChild(createPlayCard(entry));
+  });
+  playContext.tokenCards.forEach((token) => {
+    const tokenCard = document.createElement("div");
+    tokenCard.className = "play-token-card";
+    tokenCard.innerHTML = `<h4>${token.name}</h4><p>${token.description}</p>`;
+    ui.playCenter.appendChild(tokenCard);
   });
   playContext.discardIds.map(mapItemToCard).filter(Boolean).forEach((entry) => {
     ui.playDiscard.appendChild(createPlayCard(entry));
@@ -1157,6 +1407,7 @@ const startPlayWithDeck = (deckId) => {
     handIds: [],
     fieldIds: [],
     discardIds: [],
+    tokenCards: [],
     ownerKey,
     deckId,
   };
@@ -1176,6 +1427,18 @@ const discardPlayHand = () => {
   playContext.discardIds.push(...playContext.handIds);
   playContext.handIds = [];
   renderPlayZone();
+};
+
+const resetPlayMov = () => {
+  const character = getSelectedCharacter();
+  if (!character) {
+    return;
+  }
+  ensureCharacterStats(character);
+  character.stats.movCurrent = character.stats.movMax;
+  saveState();
+  renderCharacterBars();
+  setStatus("MOV resetado para o próximo turno.");
 };
 
 const buildFilterOptions = () => {
@@ -1367,7 +1630,8 @@ const buildCardElement = (card, options = {}) => {
   meta.className = "tiny";
   const durabilityText =
     typeof options.durability === "number" ? ` • DBR ${options.durability}` : "";
-  meta.textContent = `${card.type} • MOV ${card.move} • Mana ${card.mana} • ${card.class}${durabilityText}`;
+  const useText = typeof options.usesRemaining === "number" ? ` • Uso ${options.usesRemaining}` : "";
+  meta.textContent = `${card.type} • MOV ${card.move} • Mana ${card.mana} • ${card.class}${durabilityText}${useText}`;
   const desc = document.createElement("p");
   desc.textContent = card.description;
   const chips = document.createElement("div");
@@ -1389,6 +1653,12 @@ const buildCardElement = (card, options = {}) => {
     durabilityChip.className = "chip";
     durabilityChip.textContent = `DBR ${options.durability}`;
     chips.appendChild(durabilityChip);
+  }
+  if (typeof options.usesRemaining === "number") {
+    const useChip = document.createElement("span");
+    useChip.className = "chip";
+    useChip.textContent = `Uso ${options.usesRemaining}`;
+    chips.appendChild(useChip);
   }
 
   container.append(title, meta, desc, chips);
@@ -1435,9 +1705,15 @@ const createInventoryCard = (card, inventoryId, options = {}) => {
     actions,
     foil: options.foil,
     durability: options.durability,
+    usesRemaining: options.usesRemaining,
     draggable: true,
     dataId: inventoryId,
-    onClick: () => openCardModal(card, { foil: options.foil, durability: options.durability }),
+    onClick: () =>
+      openCardModal(card, {
+        foil: options.foil,
+        durability: options.durability,
+        usesRemaining: options.usesRemaining,
+      }),
   });
 };
 
@@ -1553,7 +1829,11 @@ const renderInventory = () => {
 
   sortItems(visibleItems, ui.sortInventory.value).forEach(({ item, card }) => {
     ui.inventoryList.appendChild(
-      createInventoryCard(card, item.id, { foil: item.foil, durability: item.durability }),
+      createInventoryCard(card, item.id, {
+        foil: item.foil,
+        durability: item.durability,
+        usesRemaining: item.usesRemaining,
+      }),
     );
   });
 };
@@ -1597,11 +1877,30 @@ const createCharacter = () => {
     setStatus("Digite um nome para o personagem.");
     return;
   }
+  const hpMax = Number(window.prompt("HP máximo do personagem:", "100") || 100);
+  const hpCurrent = Number(window.prompt("HP atual do personagem:", String(hpMax)) || hpMax);
+  const mpMax = Number(window.prompt("MP máximo do personagem:", "60") || 60);
+  const mpCurrent = Number(window.prompt("MP atual do personagem:", String(mpMax)) || mpMax);
+  const movMax = Number(window.prompt("MOV máximo do personagem:", "3") || 3);
+  const movCurrent = Number(window.prompt("MOV atual do personagem:", String(movMax)) || movMax);
+  const actions = Number(window.prompt("Número de ações iniciais:", "3") || 3);
   const characters = state.characters[state.currentUser] || [];
   const character = {
     id: crypto.randomUUID(),
     name,
+    stats: {
+      hpMax: Math.max(1, Math.floor(hpMax)),
+      hpCurrent: Math.max(0, Math.floor(hpCurrent)),
+      mpMax: Math.max(1, Math.floor(mpMax)),
+      mpCurrent: Math.max(0, Math.floor(mpCurrent)),
+      movMax: Math.max(0, Math.floor(movMax)),
+      movCurrent: Math.max(0, Math.floor(movCurrent)),
+      actions: Math.max(0, Math.floor(actions)),
+    },
   };
+  character.stats.hpCurrent = Math.min(character.stats.hpCurrent, character.stats.hpMax);
+  character.stats.mpCurrent = Math.min(character.stats.mpCurrent, character.stats.mpMax);
+  character.stats.movCurrent = Math.min(character.stats.movCurrent, character.stats.movMax);
   characters.push(character);
   state.characters[state.currentUser] = characters;
   state.selectedCharacter = character.id;
@@ -1769,6 +2068,7 @@ const openPack = async (packId) => {
       className: "inventory-card pack-result-card",
       foil: foilApplied,
       durability: item.durability,
+      usesRemaining: item.usesRemaining,
     });
     ui.packResultCards.appendChild(cardEl);
   });
@@ -2058,9 +2358,15 @@ const renderDecks = () => {
         actions,
         foil: item.foil,
         durability: item.durability,
+        usesRemaining: item.usesRemaining,
         draggable: true,
         dataId: item.id,
-        onClick: () => openCardModal(card, { foil: item.foil, durability: item.durability }),
+        onClick: () =>
+          openCardModal(card, {
+            foil: item.foil,
+            durability: item.durability,
+            usesRemaining: item.usesRemaining,
+          }),
       }),
     );
   });
@@ -2148,6 +2454,7 @@ const refreshForCharacter = () => {
     state.selectedDeck = null;
   }
   updateWallet();
+  renderCharacterBars();
   renderInventory();
   renderDecks();
 };
@@ -2376,9 +2683,15 @@ const renderDeckDetailCards = () => {
         className: "inventory-card",
         foil: item.foil,
         durability: item.durability,
+        usesRemaining: item.usesRemaining,
         draggable: true,
         dataId: item.id,
-        onClick: () => openCardModal(card, { foil: item.foil, durability: item.durability }),
+        onClick: () =>
+          openCardModal(card, {
+            foil: item.foil,
+            durability: item.durability,
+            usesRemaining: item.usesRemaining,
+          }),
       }),
     );
   });
@@ -2391,6 +2704,7 @@ const openCardModal = (card, options = {}) => {
       className: "inventory-card card-modal-card",
       foil: options.foil,
       durability: options.durability,
+      usesRemaining: options.usesRemaining,
     }),
   );
   openOverlay(ui.cardModal);
@@ -2535,5 +2849,6 @@ ui.playDeckSelect.addEventListener("change", (event) => {
 });
 ui.drawCard.addEventListener("click", drawPlayCard);
 ui.discardHand.addEventListener("click", discardPlayHand);
+ui.resetPlayMov.addEventListener("click", resetPlayMov);
 
 init();

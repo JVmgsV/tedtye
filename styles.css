@@ -236,6 +236,56 @@ button.secondary {
   margin: 6px 0 0;
 }
 
+.character-bars {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px;
+  margin: 10px 0 14px;
+  background: #fafaff;
+}
+
+.character-bars.compact {
+  margin: 0;
+}
+
+.character-bars h3 {
+  margin: 0 0 10px;
+}
+
+.bar-group {
+  margin-bottom: 8px;
+}
+
+.bar-label-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.status-bar {
+  width: 100%;
+  height: 12px;
+  background: #ececf6;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.status-bar-fill {
+  height: 100%;
+  width: 0;
+  border-radius: 999px;
+  transition: width 0.2s ease;
+}
+
+.status-bar-fill.hp {
+  background: linear-gradient(90deg, #b50d0d, #ef3f3f);
+}
+
+.status-bar-fill.mp {
+  background: linear-gradient(90deg, #1143a8, #3e83ff);
+}
+
 .wallet-row {
   display: flex;
   justify-content: space-between;
@@ -822,6 +872,25 @@ body.rail-open .page-content {
 .play-hand-grid.is-drop-target {
   border-color: #f5c400;
   box-shadow: 0 0 0 2px rgba(245, 196, 0, 0.4);
+}
+
+.play-token-card {
+  min-width: 180px;
+  min-height: 220px;
+  border-radius: 12px;
+  padding: 10px;
+  background: linear-gradient(180deg, #1a1a1a, #070707);
+  color: #f0f0f0;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.play-token-card h4 {
+  margin: 0 0 8px;
+}
+
+.play-token-card p {
+  margin: 0;
+  font-size: 13px;
 }
 
 .decks-view-content {
