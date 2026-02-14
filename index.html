@@ -78,7 +78,10 @@
         <h2>Personagens</h2>
         <p>Escolha um personagem para usar seus decks e cartas.</p>
         <div id="character-bars" class="character-bars hidden">
-          <h3 id="character-bars-name">Personagem</h3>
+          <div class="character-bars-head">
+            <h3 id="character-bars-name">Personagem</h3>
+            <button id="edit-character-stats" class="secondary" type="button">Editar status</button>
+          </div>
           <div class="bar-group">
             <div class="bar-label-row">
               <span>HP</span>
@@ -254,7 +257,10 @@
           </div>
           <aside class="play-panel">
             <div id="play-character-bars" class="character-bars hidden compact">
-              <h3 id="play-character-bars-name">Personagem</h3>
+              <div class="character-bars-head">
+                <h3 id="play-character-bars-name">Personagem</h3>
+                <button id="play-edit-character-stats" class="secondary" type="button">Editar status</button>
+              </div>
               <div class="bar-group">
                 <div class="bar-label-row">
                   <span>HP</span>

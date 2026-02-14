@@ -252,6 +252,18 @@ button.secondary {
   margin: 0 0 10px;
 }
 
+.character-bars-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.character-bars-head h3 {
+  margin: 0;
+}
+
 .bar-group {
   margin-bottom: 8px;
 }
@@ -882,6 +894,7 @@ body.rail-open .page-content {
   background: linear-gradient(180deg, #1a1a1a, #070707);
   color: #f0f0f0;
   border: 1px solid rgba(255, 255, 255, 0.2);
+  cursor: grab;
 }
 
 .play-token-card h4 {

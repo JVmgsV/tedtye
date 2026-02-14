@@ -54,6 +54,7 @@ const ui = {
   characterMpText: document.getElementById("character-mp-text"),
   characterMovText: document.getElementById("character-mov-text"),
   characterActions: document.getElementById("character-actions"),
+  editCharacterStats: document.getElementById("edit-character-stats"),
   deckName: document.getElementById("deck-name"),
   createDeck: document.getElementById("create-deck"),
   deckList: document.getElementById("deck-list"),
@@ -129,6 +130,7 @@ const ui = {
   playMpText: document.getElementById("play-mp-text"),
   playMovText: document.getElementById("play-mov-text"),
   playActions: document.getElementById("play-actions"),
+  playEditCharacterStats: document.getElementById("play-edit-character-stats"),
   sidebarUser: document.getElementById("sidebar-user"),
   sidebarCharacter: document.getElementById("sidebar-character"),
   sidebarBalance: document.getElementById("sidebar-balance"),
@@ -1149,10 +1151,45 @@ const resetPlayContext = () => {
 };
 
 const updatePlayStats = () => {
+  const countTokens = (zoneKey) => playContext.tokenCards.filter((token) => token.zone === zoneKey).length;
   ui.playDeckCount.textContent = playContext.deckIds.length;
-  ui.playHandCount.textContent = playContext.handIds.length;
-  ui.playFieldCount.textContent = playContext.fieldIds.length + playContext.tokenCards.length;
-  ui.playDiscardCount.textContent = playContext.discardIds.length;
+  ui.playHandCount.textContent = playContext.handIds.length + countTokens("handIds");
+  ui.playFieldCount.textContent = playContext.fieldIds.length + countTokens("fieldIds");
+  ui.playDiscardCount.textContent = playContext.discardIds.length + countTokens("discardIds");
+};
+
+const editCharacterStats = () => {
+  const character = getSelectedCharacter();
+  if (!character) {
+    setStatus("Selecione um personagem para editar status.");
+    return;
+  }
+  ensureCharacterStats(character);
+  const hpMax = Number(window.prompt("HP máximo:", String(character.stats.hpMax)) || character.stats.hpMax);
+  const hpCurrent = Number(
+    window.prompt("HP atual:", String(character.stats.hpCurrent)) || character.stats.hpCurrent,
+  );
+  const mpMax = Number(window.prompt("MP máximo:", String(character.stats.mpMax)) || character.stats.mpMax);
+  const mpCurrent = Number(
+    window.prompt("MP atual:", String(character.stats.mpCurrent)) || character.stats.mpCurrent,
+  );
+  const movMax = Number(window.prompt("MOV máximo:", String(character.stats.movMax)) || character.stats.movMax);
+  const movCurrent = Number(
+    window.prompt("MOV atual:", String(character.stats.movCurrent)) || character.stats.movCurrent,
+  );
+  const actions = Number(window.prompt("Ações:", String(character.stats.actions)) || character.stats.actions);
+
+  character.stats.hpMax = Math.max(1, Math.floor(hpMax));
+  character.stats.hpCurrent = Math.max(0, Math.min(character.stats.hpMax, Math.floor(hpCurrent)));
+  character.stats.mpMax = Math.max(1, Math.floor(mpMax));
+  character.stats.mpCurrent = Math.max(0, Math.min(character.stats.mpMax, Math.floor(mpCurrent)));
+  character.stats.movMax = Math.max(0, Math.floor(movMax));
+  character.stats.movCurrent = Math.max(0, Math.min(character.stats.movMax, Math.floor(movCurrent)));
+  character.stats.actions = Math.max(0, Math.floor(actions));
+
+  saveState();
+  renderCharacterBars();
+  setStatus("Status do personagem atualizado.");
 };
 
 const findPlayZoneKeyByItemId = (itemId) => {
@@ -1175,6 +1212,14 @@ const movePlayItemToDiscard = (itemId) => {
   if (!playContext.discardIds.includes(itemId)) {
     playContext.discardIds.push(itemId);
   }
+};
+
+const movePlayTokenToZone = (tokenId, zoneKey) => {
+  const token = playContext.tokenCards.find((entry) => entry.id === tokenId);
+  if (!token) {
+    return;
+  }
+  token.zone = zoneKey;
 };
 
 const usePlayCard = (card, item) => {
@@ -1226,6 +1271,7 @@ const usePlayCard = (card, item) => {
       id: crypto.randomUUID(),
       name: `${card.name} Token`,
       description: "Token gerado pela carta usada.",
+      zone: "fieldIds",
     });
   }
 
@@ -1299,25 +1345,39 @@ const renderPlayZone = () => {
     return wrapper;
   };
 
+  const renderToken = (token) => {
+    const tokenCard = document.createElement("div");
+    tokenCard.className = "play-token-card";
+    tokenCard.dataset.tokenId = token.id;
+    tokenCard.setAttribute("draggable", "true");
+    tokenCard.innerHTML = `<h4>${token.name}</h4><p>${token.description}</p>`;
+    return tokenCard;
+  };
+
   playContext.handIds.map(mapItemToCard).filter(Boolean).forEach((entry) => {
     ui.playHand.appendChild(createPlayCard(entry));
   });
+  playContext.tokenCards
+    .filter((token) => token.zone === "handIds")
+    .forEach((token) => ui.playHand.appendChild(renderToken(token)));
+
   playContext.fieldIds.map(mapItemToCard).filter(Boolean).forEach((entry) => {
     ui.playCenter.appendChild(createPlayCard(entry));
   });
-  playContext.tokenCards.forEach((token) => {
-    const tokenCard = document.createElement("div");
-    tokenCard.className = "play-token-card";
-    tokenCard.innerHTML = `<h4>${token.name}</h4><p>${token.description}</p>`;
-    ui.playCenter.appendChild(tokenCard);
-  });
+  playContext.tokenCards
+    .filter((token) => token.zone === "fieldIds")
+    .forEach((token) => ui.playCenter.appendChild(renderToken(token)));
+
   playContext.discardIds.map(mapItemToCard).filter(Boolean).forEach((entry) => {
     ui.playDiscard.appendChild(createPlayCard(entry));
   });
+  playContext.tokenCards
+    .filter((token) => token.zone === "discardIds")
+    .forEach((token) => ui.playDiscard.appendChild(renderToken(token)));
 
   updatePlayStats();
 
-  let draggedId = null;
+  let draggedPayload = null;
   const zones = [
     { el: ui.playHand, key: "handIds", hint: "Selecione um deck para sacar cartas." },
     { el: ui.playCenter, key: "fieldIds", hint: "Arraste cartas para o campo central" },
@@ -1332,14 +1392,17 @@ const renderPlayZone = () => {
 
   zones.forEach((zone) => {
     zone.el.ondragstart = (event) => {
-      const target = event.target.closest(".inventory-card");
-      if (!target) {
+      const itemTarget = event.target.closest(".inventory-card");
+      const tokenTarget = event.target.closest(".play-token-card");
+      if (!itemTarget && !tokenTarget) {
         return;
       }
-      draggedId = target.dataset.inventoryId;
+      draggedPayload = itemTarget
+        ? `item:${itemTarget.dataset.inventoryId}`
+        : `token:${tokenTarget.dataset.tokenId}`;
       if (event.dataTransfer) {
         event.dataTransfer.effectAllowed = "move";
-        event.dataTransfer.setData("text/plain", draggedId);
+        event.dataTransfer.setData("text/plain", draggedPayload);
       }
     };
     zone.el.ondragover = (event) => {
@@ -1359,16 +1422,21 @@ const renderPlayZone = () => {
     zone.el.ondrop = (event) => {
       event.preventDefault();
       zone.el.classList.remove("is-drop-target");
-      const droppedId = draggedId || event.dataTransfer?.getData("text/plain");
-      if (!droppedId) {
+      const dropped = draggedPayload || event.dataTransfer?.getData("text/plain");
+      if (!dropped) {
         return;
       }
-      removeFromAll(droppedId);
-      playContext[zone.key].push(droppedId);
+      if (dropped.startsWith("token:")) {
+        movePlayTokenToZone(dropped.replace("token:", ""), zone.key);
+      } else {
+        const droppedId = dropped.replace("item:", "");
+        removeFromAll(droppedId);
+        playContext[zone.key].push(droppedId);
+      }
       renderPlayZone();
     };
     zone.el.ondragend = () => {
-      draggedId = null;
+      draggedPayload = null;
       zone.el.classList.remove("is-drop-target");
     };
     if (!zone.el.childElementCount) {
@@ -2850,5 +2918,7 @@ ui.playDeckSelect.addEventListener("change", (event) => {
 ui.drawCard.addEventListener("click", drawPlayCard);
 ui.discardHand.addEventListener("click", discardPlayHand);
 ui.resetPlayMov.addEventListener("click", resetPlayMov);
+ui.editCharacterStats.addEventListener("click", editCharacterStats);
+ui.playEditCharacterStats.addEventListener("click", editCharacterStats);
 
 init();
